@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/serve.mjs",
+    "dev:photo": "node scripts/serve.mjs --mock-analysis",
     "build": "node scripts/build.mjs",
     "preview": "node scripts/serve.mjs dist",
     "preview:product": "npm run build && node scripts/serve.mjs dist",
-    "check": "node --check app.js && node --check scripts/build.mjs && node --check scripts/serve.mjs && node --check scripts/setup-git.mjs",
-    "verify": "npm run check && npm run build",
-    "setup:git": "node scripts/setup-git.mjs"
+    "check": "node --check config.js && node --check app.js && node --check worker/src/index.js && node --check scripts/build.mjs && node --check scripts/serve.mjs && node --check scripts/setup-git.mjs && node --check scripts/test-worker.mjs",
+    "test:worker": "node scripts/test-worker.mjs",
+    "verify": "npm run check && npm run test:worker && npm run build",
+    "setup:git": "node scripts/setup-git.mjs",
+    "deploy:worker": "npx wrangler@4 deploy --config worker/wrangler.jsonc"
   }
 }

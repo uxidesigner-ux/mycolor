@@ -29,6 +29,8 @@ jobs:
 
       - name: Verify and build product
         run: npm run verify
+        env:
+          MOI_ANALYSIS_ENDPOINT: ${{ vars.MOI_ANALYSIS_ENDPOINT }}
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
