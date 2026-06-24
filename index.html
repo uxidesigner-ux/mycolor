@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f3ed" />
+    <meta name="description" content="얼굴형과 퍼스널 컬러를 바탕으로 오늘의 헤어, 메이크업, 옷을 추천하는 데일리 스타일리스트" />
+    <title>MOI — 데일리 퍼스널 스타일리스트</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="#home" aria-label="MOI 홈">
+        <span class="brand-mark">M</span>
+        <span>MOI</span>
+      </a>
+      <button class="header-link" id="saved-report-button" type="button" hidden>
+        내 스타일
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+      </button>
+    </header>
+
+    <main>
+      <section class="screen landing-screen is-active" id="home-screen" data-screen="home">
+        <div class="hero-copy reveal">
+          <p class="eyebrow"><span></span> Daily personal stylist</p>
+          <h1>매일 아침,<br /><em>나답게</em> 고르는 법.</h1>
+          <p class="hero-description">
+            얼굴형과 퍼스널 컬러에 맞춰 헤어부터 메이크업, 옷까지.<br class="desktop-only" />
+            흩어진 스타일 고민을 하나의 답으로 정리해 드려요.
+          </p>
+          <div class="hero-actions">
+            <button class="primary-button start-button" type="button">
+              나의 스타일 찾기
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
+            </button>
+            <p>약 1분 · 회원가입 없이 시작</p>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal" aria-label="스타일 추천 미리보기">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="look-card look-card-main">
+            <div class="look-card-top">
+              <span>Today’s mood</span>
+              <span class="temperature">21°</span>
+            </div>
+            <div class="portrait-art" aria-hidden="true">
+              <span class="portrait-sun"></span>
+              <span class="portrait-head"></span>
+              <span class="portrait-hair"></span>
+              <span class="portrait-body"></span>
+            </div>
+            <div class="look-card-bottom">
+              <p>Soft &amp; Natural</p>
+              <div class="mini-palette"><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+          <div class="floating-note note-hair">
+            <span class="note-icon">✦</span>
+            <div><small>HAIR</small><strong>레이어드 C컬</strong></div>
+          </div>
+          <div class="floating-note note-lip">
+            <span class="lip-swatch"></span>
+            <div><small>LIP</small><strong>로지 코랄</strong></div>
+          </div>
+        </div>
+
+        <div class="promise-strip reveal">
+          <div><strong>01</strong><span>나를 이해하는<br />간단한 진단</span></div>
+          <div><strong>02</strong><span>바로 적용하는<br />스타일 가이드</span></div>
+          <div><strong>03</strong><span>제품과 가까운 숍까지<br />한 번에 연결</span></div>
+        </div>
+
+        <section class="feature-section reveal" aria-labelledby="feature-title">
+          <div class="section-heading">
+            <p class="eyebrow"><span></span> One profile, every detail</p>
+            <h2 id="feature-title">당신의 취향을<br />매일의 선택으로.</h2>
+          </div>
+          <div class="feature-grid">
+            <article class="feature-card feature-hair">
+              <span class="feature-number">01</span>
+              <div class="feature-symbol">⌁</div>
+              <h3>Hair</h3>
+              <p>얼굴형을 보완하는 커트와 퍼스널 컬러에 맞는 염색, 관리 시점을 알려드려요.</p>
+            </article>
+            <article class="feature-card feature-beauty">
+              <span class="feature-number">02</span>
+              <div class="feature-symbol">◒</div>
+              <h3>Beauty</h3>
+              <p>아이브로우부터 렌즈, 립과 섀도까지 어울리는 색만 간결하게 골라드려요.</p>
+            </article>
+            <article class="feature-card feature-wear">
+              <span class="feature-number">03</span>
+              <div class="feature-symbol">◇</div>
+              <h3>Wear</h3>
+              <p>오늘 원하는 무드와 베스트 컬러를 연결해 실패 없는 착장을 완성해요.</p>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <section class="screen quiz-screen" id="quiz-screen" data-screen="quiz" aria-labelledby="quiz-title">
+        <div class="quiz-shell">
+          <div class="quiz-topbar">
+            <button class="icon-button" id="quiz-back" type="button" aria-label="이전 단계">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <div class="progress-wrap">
+              <span id="progress-label">1 / 4</span>
+              <div class="progress-track"><span id="progress-bar"></span></div>
+            </div>
+            <button class="text-button" id="quiz-close" type="button">닫기</button>
+          </div>
+
+          <form id="style-form">
+            <fieldset class="quiz-step" data-step="0">
+              <legend id="quiz-title">먼저, 어떻게 불러드릴까요?</legend>
+              <p class="step-description">추천 결과와 가까운 숍을 찾는 데만 사용해요.</p>
+              <label class="text-field">
+                <span>이름 또는 닉네임</span>
+                <input id="name-input" name="name" type="text" maxlength="12" placeholder="예: 모이" autocomplete="nickname" />
+              </label>
+              <label class="text-field">
+                <span>활동 지역</span>
+                <input id="area-input" name="area" type="text" maxlength="24" placeholder="예: 서울 성수동" autocomplete="address-level2" />
+              </label>
+            </fieldset>
+
+            <fieldset class="quiz-step" data-step="1" hidden>
+              <legend>내 얼굴형과 가장 가까운 것은?</legend>
+              <p class="step-description">정확하지 않아도 괜찮아요. 평소 듣던 인상으로 골라주세요.</p>
+              <div class="choice-grid face-grid" data-choice-group="faceShape">
+                <button class="choice-card" type="button" data-value="oval"><span class="face-icon face-oval"></span><strong>계란형</strong><small>균형 잡힌 곡선</small></button>
+                <button class="choice-card" type="button" data-value="round"><span class="face-icon face-round"></span><strong>둥근형</strong><small>부드러운 윤곽</small></button>
+                <button class="choice-card" type="button" data-value="square"><span class="face-icon face-square"></span><strong>각진형</strong><small>또렷한 턱선</small></button>
+                <button class="choice-card" type="button" data-value="long"><span class="face-icon face-long"></span><strong>긴형</strong><small>세로로 긴 윤곽</small></button>
+                <button class="choice-card" type="button" data-value="heart"><span class="face-icon face-heart"></span><strong>하트형</strong><small>넓은 이마, 좁은 턱</small></button>
+              </div>
+            </fieldset>
+
+            <fieldset class="quiz-step" data-step="2" hidden>
+              <legend>나의 퍼스널 컬러는?</legend>
+              <p class="step-description">아직 모른다면 평소 가장 잘 받는다고 느끼는 팔레트를 골라주세요.</p>
+              <div class="choice-grid color-grid" data-choice-group="personalColor">
+                <button class="choice-card color-choice spring" type="button" data-value="spring"><span class="color-dots"><i></i><i></i><i></i></span><strong>봄 웜</strong><small>화사하고 생기 있게</small></button>
+                <button class="choice-card color-choice summer" type="button" data-value="summer"><span class="color-dots"><i></i><i></i><i></i></span><strong>여름 쿨</strong><small>맑고 부드럽게</small></button>
+                <button class="choice-card color-choice autumn" type="button" data-value="autumn"><span class="color-dots"><i></i><i></i><i></i></span><strong>가을 웜</strong><small>깊고 편안하게</small></button>
+                <button class="choice-card color-choice winter" type="button" data-value="winter"><span class="color-dots"><i></i><i></i><i></i></span><strong>겨울 쿨</strong><small>선명하고 세련되게</small></button>
+              </div>
+              <button class="help-link" id="color-help" type="button">내 퍼스널 컬러를 잘 모르겠어요</button>
+              <div class="color-help-box" id="color-help-box" hidden>
+                <strong>작은 힌트</strong>
+                <p>골드 액세서리가 편하면 웜, 실버가 편하면 쿨부터 살펴보세요. 선명한 색이 잘 받으면 봄·겨울, 차분한 색이 잘 받으면 여름·가을일 가능성이 커요.</p>
+              </div>
+            </fieldset>
+
+            <fieldset class="quiz-step" data-step="3" hidden>
+              <legend>요즘 끌리는 무드는?</legend>
+              <p class="step-description">오늘의 옷과 메이크업 분위기를 결정해요.</p>
+              <div class="choice-grid mood-grid" data-choice-group="mood">
+                <button class="choice-card mood-choice" type="button" data-value="clean"><span>◯</span><strong>클린</strong><small>단정하고 맑은</small></button>
+                <button class="choice-card mood-choice" type="button" data-value="lovely"><span>ෆ</span><strong>러블리</strong><small>부드럽고 사랑스러운</small></button>
+                <button class="choice-card mood-choice" type="button" data-value="chic"><span>◆</span><strong>시크</strong><small>도회적이고 또렷한</small></button>
+                <button class="choice-card mood-choice" type="button" data-value="natural"><span>⌇</span><strong>내추럴</strong><small>편안하고 담백한</small></button>
+              </div>
+            </fieldset>
+
+            <div class="quiz-footer">
+              <button class="primary-button full-button" id="quiz-next" type="button" disabled>다음</button>
+              <p>선택한 정보는 이 기기에만 저장됩니다.</p>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="screen result-screen" id="result-screen" data-screen="result" aria-labelledby="result-title">
+        <div class="result-header">
+          <div>
+            <p class="eyebrow"><span></span> My style edit</p>
+            <h1 id="result-title"><span id="result-name">모이</span>님의 스타일</h1>
+          </div>
+          <button class="icon-button profile-edit" id="edit-profile" type="button" aria-label="프로필 다시 설정">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /></svg>
+          </button>
+        </div>
+
+        <div class="result-hero">
+          <div class="result-hero-copy">
+            <p>Today’s direction</p>
+            <h2 id="direction-title">부드러운 온도,<br />가벼운 균형.</h2>
+            <div class="profile-tags" id="profile-tags"></div>
+          </div>
+          <div class="profile-art" aria-hidden="true">
+            <span class="art-arch"></span><span class="art-head"></span><span class="art-hair"></span><span class="art-neck"></span>
+          </div>
+          <div class="result-palette" id="result-palette" aria-label="추천 컬러 팔레트"></div>
+        </div>
+
+        <nav class="category-tabs" aria-label="스타일 추천 카테고리">
+          <button class="category-tab is-active" type="button" data-category="today">오늘</button>
+          <button class="category-tab" type="button" data-category="hair">헤어</button>
+          <button class="category-tab" type="button" data-category="beauty">뷰티</button>
+          <button class="category-tab" type="button" data-category="wear">옷</button>
+          <button class="category-tab" type="button" data-category="care">관리</button>
+        </nav>
+
+        <div class="recommendation-content" id="recommendation-content" aria-live="polite"></div>
+
+        <div class="result-footer">
+          <p>추천은 선택한 프로필을 바탕으로 만든 스타일 가이드예요.</p>
+          <button class="secondary-button" id="share-result" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M5 13v7h14v-7" /></svg>
+            결과 공유하기
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>

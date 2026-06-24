@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+echo "[MOI] 푸시 전 프로덕션 검증을 실행합니다."
+npm run verify

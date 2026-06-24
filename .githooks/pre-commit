@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+echo "[MOI] 커밋 전 JavaScript 검사를 실행합니다."
+npm run check
