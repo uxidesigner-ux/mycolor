@@ -57,6 +57,16 @@ gh workflow run pages.yml --repo uxidesigner-ux/mycolor
 
 빌드 시 `MOI_ANALYSIS_ENDPOINT`가 있으면 배포용 `config.js`에 공개 API 주소가 자동 주입됩니다. OpenAI 비밀 키는 Worker secret에만 저장되고 GitHub Pages나 저장소에는 들어가지 않습니다. OpenAI 모델은 `worker/wrangler.jsonc`의 `OPENAI_MODEL`로 변경할 수 있습니다.
 
+### 모바일에서 배포 준비
+
+로컬 Cloudflare OAuth 대신 GitHub Actions로 배포할 수도 있습니다. 저장소의 **Settings → Secrets and variables → Actions**에 아래 Repository secrets 3개를 등록합니다.
+
+- `CLOUDFLARE_API_TOKEN`: Cloudflare의 **Edit Cloudflare Workers** 템플릿으로 생성한 API 토큰
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Workers 대시보드에 표시되는 Account ID
+- `OPENAI_API_KEY`: OpenAI API 프로젝트 키
+
+`Deploy photo analysis Worker` 워크플로가 Worker 배포와 OpenAI secret 등록을 함께 처리합니다. 값은 로그나 정적 사이트에 노출되지 않습니다.
+
 ## Git 커밋·푸시 환경
 
 처음 한 번 아래 명령을 실행하면 저장소 전용 Git hooks가 활성화됩니다.
