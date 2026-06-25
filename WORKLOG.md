@@ -505,3 +505,35 @@
   - v0.1.6 커밋/푸시 후 Pages/Worker 재배포 및 실제 `/analyze` 재검증 필요.
   - 현재 등록한 Cloudflare token은 로컬 OAuth 기반 임시 성격이므로, 장기 운영에는 Dashboard에서 전용 `Edit Cloudflare Workers` API token으로 교체 권장.
   - secret 값은 조회/기록하지 않음.
+
+## 2026-06-25 KST — v0.1.7 OpenAI quota 상태 처리
+
+- 요청 흐름: Cloudflare secrets 등록 및 Worker 재배포 후 실제 사진 분석 동작 확인.
+- 버전:
+  - `0.1.6` → `0.1.7`
+- 확인 결과:
+  - Pages/Worker 배포는 성공.
+  - 실제 Worker는 `OPENAI_API_KEY`를 받아 OpenAI API까지 호출함.
+  - 더미 PNG 테스트는 OpenAI `invalid_value`로 거부됨.
+  - 유효한 JPG 테스트에서 OpenAI `insufficient_quota` 응답 확인.
+  - 결론: Cloudflare/Worker/API key 연결은 완료됐고, 남은 차단 조건은 OpenAI 계정의 API billing/credit/quota 설정.
+- 조치:
+  - Worker가 `insufficient_quota`를 일반 rate limit으로 오해하지 않고 “OpenAI 사용량 설정 필요” 메시지로 반환하도록 수정.
+  - 유효하지 않은 이미지 데이터는 400과 “사진 파일을 읽지 못했어요” 메시지로 반환하도록 수정.
+  - Worker contract test에 `insufficient_quota` 매핑 검증 추가.
+  - 앱/설정/스플래시/디자인 문서 버전을 `0.1.7`로 동기화.
+- 파일:
+  - `DESIGN.md`
+  - `WORKLOG.md`
+  - `app.js`
+  - `config.js`
+  - `index.html`
+  - `package.json`
+  - `scripts/test-worker.mjs`
+  - `styles.css`
+  - `worker/src/index.js`
+- 검증:
+  - `npm run verify` 통과, `Version verified: 0.1.7` 확인.
+  - `git diff --check` 통과.
+- 남은 일:
+  - OpenAI Platform Billing에서 API credits/결제 한도 설정 후 실제 얼굴 사진으로 `/analyze` 재검증 필요.

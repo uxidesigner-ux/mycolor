@@ -58,7 +58,7 @@ components:
     rounded: "{rounded.md}"
 ---
 
-# Design System: MOI v0.1.6
+# Design System: MOI v0.1.7
 
 ## 1. Overview
 

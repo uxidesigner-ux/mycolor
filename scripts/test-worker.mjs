@@ -75,6 +75,25 @@ try {
   });
   if (limitedResponse.status !== 429) throw new Error("Worker must reject rate-limited analysis requests.");
 
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    error: {
+      type: "insufficient_quota",
+      code: "insufficient_quota",
+      message: "You exceeded your current quota."
+    }
+  }), { status: 429, headers: { "Content-Type": "application/json" } });
+
+  const quotaRequest = new Request("https://moi-style-analysis.example/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Origin": "https://uxidesigner-ux.github.io" },
+    body: JSON.stringify({ image: "data:image/jpeg;base64,AAAA", clientId: "client_test_12345" })
+  });
+  const quotaResponse = await worker.fetch(quotaRequest, { OPENAI_API_KEY: "test-key" });
+  const quotaResult = await quotaResponse.json();
+  if (quotaResponse.status !== 503 || !quotaResult.message.includes("OpenAI 사용량")) {
+    throw new Error("Worker must explain OpenAI quota setup failures.");
+  }
+
   console.log("Worker analysis contract verified.");
 } finally {
   globalThis.fetch = originalFetch;

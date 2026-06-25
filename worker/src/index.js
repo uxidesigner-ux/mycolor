@@ -199,6 +199,32 @@ function normalizeAnalysis(analysis) {
   };
 }
 
+function openAIErrorResponse(status, error, origin, retryAfter) {
+  if (error.code === "insufficient_quota") {
+    return json(
+      { message: "사진 분석 서버의 OpenAI 사용량 설정이 필요해요. 지금은 직접 선택으로 리포트를 만들 수 있습니다." },
+      503,
+      corsHeaders(origin)
+    );
+  }
+
+  if (error.code === "invalid_value" && error.message.includes("valid image")) {
+    return json(
+      { message: "사진 파일을 읽지 못했어요. 다른 사진으로 다시 시도해 주세요." },
+      400,
+      corsHeaders(origin)
+    );
+  }
+
+  const responseStatus = status === 429 ? 429 : 502;
+  const headers = retryAfter ? { ...corsHeaders(origin), "Retry-After": retryAfter } : corsHeaders(origin);
+  return json(
+    { message: responseStatus === 429 ? "분석 요청이 잠시 많아요. 잠시 후 다시 시도해 주세요." : "사진 분석이 잠시 원활하지 않아요. 잠시 후 다시 시도해 주세요." },
+    responseStatus,
+    headers
+  );
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
@@ -274,12 +300,7 @@ export default {
       const openAIError = await readOpenAIError(openAIResponse);
       console.error("OpenAI analysis failed", openAIResponse.status, requestId || "no-request-id", openAIError);
       const retryAfter = openAIResponse.headers.get("retry-after");
-      const status = openAIResponse.status === 429 ? 429 : 502;
-      return json(
-        { message: status === 429 ? "분석 요청이 잠시 많아요. 잠시 후 다시 시도해 주세요." : "사진 분석이 잠시 원활하지 않아요. 잠시 후 다시 시도해 주세요." },
-        status,
-        retryAfter ? { ...corsHeaders(origin), "Retry-After": retryAfter } : corsHeaders(origin)
-      );
+      return openAIErrorResponse(openAIResponse.status, openAIError, origin, retryAfter);
     }
 
     const openAIData = await openAIResponse.json();
