@@ -10,8 +10,18 @@
     <link rel="icon" href="icon.svg" />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body class="is-splashing">
+    <noscript><style>.splash-screen{display:none}</style></noscript>
     <div class="noise" aria-hidden="true"></div>
+
+    <div class="splash-screen" id="splash-screen" role="status" aria-live="polite" aria-label="MOI 로딩 중">
+      <div class="splash-logo-stack">
+        <img class="splash-logo" src="icon.svg" alt="MOI" />
+        <p>Daily personal stylist</p>
+      </div>
+      <div class="splash-loading-bar" aria-hidden="true"><span></span></div>
+      <p class="splash-version" id="splash-version">v0.1.2</p>
+    </div>
 
     <header class="site-header">
       <a class="brand" href="#home" aria-label="MOI 홈">
@@ -27,19 +37,29 @@
     <main>
       <section class="screen landing-screen is-active" id="home-screen" data-screen="home">
         <div class="hero-copy reveal">
-          <p class="eyebrow"><span></span> Daily personal stylist</p>
+          <p class="eyebrow"><span></span> AI가 제안하고, 내가 확정하는 스타일 기준</p>
           <h1>매일 아침,<br /><em>나답게</em> 고르는 법.</h1>
           <p class="hero-description">
-            얼굴형과 퍼스널 컬러에 맞춰 헤어부터 메이크업, 옷까지.<br class="desktop-only" />
-            흩어진 스타일 고민을 하나의 답으로 정리해 드려요.
+            사진 한 장이나 직접 선택으로 얼굴형, 퍼스널 컬러, 원하는 무드를 정리하고<br class="desktop-only" />
+            오늘 바로 시도할 헤어·메이크업·옷 추천을 받아보세요.
           </p>
           <div class="hero-actions">
-            <button class="primary-button start-button" type="button">
-              나의 스타일 찾기
+            <button class="primary-button photo-start-button" type="button">
+              사진 한 장으로 시작하기
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
             </button>
-            <p>약 1분 · 회원가입 없이 시작</p>
+            <button class="manual-start-button" type="button">직접 선택할게요</button>
+            <ul class="trust-row" aria-label="사진 분석 안내">
+              <li>30초 안에 완료</li>
+              <li>사진 저장 안 함</li>
+              <li>결과 직접 수정 가능</li>
+            </ul>
           </div>
+          <ol class="hero-flow" aria-label="MOI 추천 진행 방식">
+            <li><strong>사진 선택</strong><span>또는 직접 입력</span></li>
+            <li><strong>AI 제안 확인</strong><span>판정이 아닌 첫 단서</span></li>
+            <li><strong>내가 확정</strong><span>추천은 내 기준으로</span></li>
+          </ol>
         </div>
 
         <div class="hero-visual reveal" aria-label="스타일 추천 미리보기">
@@ -72,37 +92,191 @@
         </div>
 
         <div class="promise-strip reveal">
-          <div><strong>01</strong><span>나를 이해하는<br />간단한 진단</span></div>
-          <div><strong>02</strong><span>바로 적용하는<br />스타일 가이드</span></div>
-          <div><strong>03</strong><span>제품과 가까운 숍까지<br />한 번에 연결</span></div>
+          <div><strong>얼굴형·컬러</strong><span>AI가 먼저 읽고<br />내가 다시 확인해요</span></div>
+          <div><strong>오늘의 추천</strong><span>헤어·뷰티·옷을<br />바로 적용할 수 있게</span></div>
+          <div><strong>다음 행동</strong><span>관리 주기와 주변 숍까지<br />자연스럽게 이어져요</span></div>
         </div>
 
         <section class="feature-section reveal" aria-labelledby="feature-title">
           <div class="section-heading">
-            <p class="eyebrow"><span></span> One profile, every detail</p>
+            <p class="eyebrow"><span></span> 하나의 기준으로 이어지는 추천</p>
             <h2 id="feature-title">당신의 취향을<br />매일의 선택으로.</h2>
           </div>
           <div class="feature-grid">
             <article class="feature-card feature-hair">
-              <span class="feature-number">01</span>
+              <span class="feature-label">Hair direction</span>
               <div class="feature-symbol">⌁</div>
               <h3>Hair</h3>
               <p>얼굴형을 보완하는 커트와 퍼스널 컬러에 맞는 염색, 관리 시점을 알려드려요.</p>
             </article>
             <article class="feature-card feature-beauty">
-              <span class="feature-number">02</span>
+              <span class="feature-label">Beauty palette</span>
               <div class="feature-symbol">◒</div>
               <h3>Beauty</h3>
               <p>아이브로우부터 렌즈, 립과 섀도까지 어울리는 색만 간결하게 골라드려요.</p>
             </article>
             <article class="feature-card feature-wear">
-              <span class="feature-number">03</span>
+              <span class="feature-label">Daily wear</span>
               <div class="feature-symbol">◇</div>
               <h3>Wear</h3>
               <p>오늘 원하는 무드와 베스트 컬러를 연결해 실패 없는 착장을 완성해요.</p>
             </article>
           </div>
         </section>
+      </section>
+
+      <section class="screen analysis-screen" id="analysis-screen" data-screen="analysis" aria-labelledby="analysis-title">
+        <div class="analysis-shell">
+          <div class="analysis-topbar">
+            <button class="icon-button" id="analysis-back" type="button" aria-label="홈으로">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <div class="analysis-brand"><span>MOI</span><small>AI STYLE DISCOVERY</small></div>
+            <button class="text-button manual-start-button" type="button">직접 선택</button>
+          </div>
+
+          <div class="analysis-stage is-active" id="analysis-guide" data-analysis-stage="guide">
+            <div class="analysis-heading">
+              <p class="eyebrow"><span></span> 사진은 제안의 시작일 뿐이에요</p>
+              <h1 id="analysis-title">잘 나온 사진보다,<br /><em>나답게 나온 사진.</em></h1>
+              <p>꾸미지 않은 얼굴에서 스타일의 기준이 되는 윤곽과 색감만 살펴볼게요.</p>
+            </div>
+
+            <div class="photo-onboarding-grid">
+              <label class="photo-dropzone" id="photo-dropzone" for="photo-input">
+                <input id="photo-input" type="file" accept="image/jpeg,image/png,image/webp" capture="user" />
+                <span class="camera-mark" aria-hidden="true">
+                  <svg viewBox="0 0 48 48"><path d="M15 14.5 18 10h12l3 4.5h5a4 4 0 0 1 4 4V35a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V18.5a4 4 0 0 1 4-4h5Z"/><circle cx="24" cy="26" r="8"/></svg>
+                </span>
+                <strong>사진 선택 또는 촬영</strong>
+                <small>JPG, PNG, WEBP · 최대 8MB</small>
+              </label>
+              <button class="demo-photo-button" id="demo-photo-button" type="button" hidden>로컬 예시 사진으로 흐름 확인</button>
+
+              <div class="photo-guide-card">
+                <span class="card-kicker">GOOD TO KNOW</span>
+                <h2>분석하기 좋은 사진</h2>
+                <ul class="photo-guide-list">
+                  <li><span>빛</span><div><strong>창가의 자연스러운 빛</strong><small>역광이나 노란 조명은 피해 주세요.</small></div></li>
+                  <li><span>정면</span><div><strong>필터 없이 정면으로</strong><small>얼굴 윤곽과 피부색이 모두 보여야 해요.</small></div></li>
+                  <li><span>가림</span><div><strong>안경과 큰 액세서리는 잠시 빼기</strong><small>앞머리는 평소 모습 그대로도 괜찮아요.</small></div></li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="privacy-promise">
+              <span>⌁</span>
+              <p><strong>사진을 따로 보관하지 않아요.</strong> 위치정보를 제거해 OpenAI API로 분석하며, MOI 서버와 결과에는 별도 저장하지 않습니다.</p>
+            </div>
+          </div>
+
+          <div class="analysis-stage" id="analysis-preview" data-analysis-stage="preview" hidden>
+            <div class="analysis-heading compact">
+              <p class="eyebrow"><span></span> Before we take a closer look</p>
+              <h1>이 사진 속 모습이<br />평소의 나와 가깝나요?</h1>
+              <p>AI의 판단보다 사진의 조건이 결과에 더 큰 영향을 줄 수 있어요.</p>
+            </div>
+            <div class="preview-grid">
+              <figure class="photo-preview-frame">
+                <img id="photo-preview-image" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="선택한 분석 사진 미리보기" />
+                <figcaption id="photo-file-caption"></figcaption>
+              </figure>
+              <div class="preview-checklist">
+                <div class="preview-signal is-good"><span>✓</span><div><strong>얼굴이 화면 중앙에 있어요</strong><small>정면 얼굴 전체가 보이는지 한 번 더 확인해 주세요.</small></div></div>
+                <div class="preview-signal"><span>○</span><div><strong>피부색이 실제와 비슷한가요?</strong><small>너무 밝거나 노랗게 보이면 다른 사진이 더 좋아요.</small></div></div>
+                <label class="consent-check">
+                  <input id="analysis-consent" type="checkbox" />
+                  <span>사진을 OpenAI API 분석에 일시 전송하는 데 동의해요. MOI 결과에는 사진이 저장되지 않습니다.</span>
+                </label>
+                <button class="primary-button full-button" id="analyze-photo-button" type="button" disabled>
+                  이 사진으로 분석하기
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
+                </button>
+                <button class="replace-photo-button" id="replace-photo-button" type="button">다른 사진 선택</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="analysis-stage" id="analysis-loading" data-analysis-stage="loading" hidden aria-live="polite">
+            <div class="analysis-loading-layout">
+              <div class="loading-portrait">
+                <img id="loading-photo-image" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="분석 중인 사진" />
+                <span class="scan-line" aria-hidden="true"></span>
+                <div class="loading-orbit" aria-hidden="true"></div>
+              </div>
+              <div class="loading-copy">
+                <p class="eyebrow"><span></span> Looking with care</p>
+                <h1>평가하지 않고,<br />어울림의 단서를 찾는 중.</h1>
+                <ol class="analysis-progress-list">
+                  <li class="is-active" data-loading-step="0"><span>빛</span><p>사진의 빛과 선명도 확인</p></li>
+                  <li data-loading-step="1"><span>윤곽</span><p>얼굴 윤곽의 균형 살펴보기</p></li>
+                  <li data-loading-step="2"><span>색감</span><p>피부의 온도와 대비 읽기</p></li>
+                  <li data-loading-step="3"><span>정리</span><p>나를 위한 스타일 기준 정리</p></li>
+                </ol>
+                <small>보통 20초 안팎으로 걸려요.</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="analysis-stage" id="analysis-review" data-analysis-stage="review" hidden>
+            <div class="review-intro">
+              <div>
+                <p class="eyebrow"><span></span> A suggestion, not a verdict</p>
+                <h1>제가 읽은<br />스타일의 단서예요.</h1>
+                <p>AI가 먼저 제안했지만, 나를 가장 잘 아는 사람은 나예요. 다르게 느껴지면 편하게 바꿔 주세요.</p>
+              </div>
+              <div class="confidence-card">
+                <span class="confidence-ring"><strong id="analysis-confidence">—</strong><small>신뢰도</small></span>
+                <p id="analysis-summary">사진에서 확인한 단서를 정리했어요.</p>
+              </div>
+            </div>
+
+            <div class="review-section">
+              <div class="review-section-heading"><div><span>Face</span><h2>얼굴형</h2></div><small>AI 제안 · 직접 수정 가능</small></div>
+              <div class="review-option-grid" id="review-face-options" data-review-group="faceShape"></div>
+              <ul class="evidence-list" id="face-evidence"></ul>
+            </div>
+
+            <div class="review-section">
+              <div class="review-section-heading"><div><span>Color</span><h2>퍼스널 컬러</h2></div><small>사진 기반의 예상 범위</small></div>
+              <div class="review-option-grid color-review-grid" id="review-color-options" data-review-group="personalColor"></div>
+              <ul class="evidence-list" id="color-evidence"></ul>
+              <p class="accuracy-note" id="color-accuracy-note">조명과 카메라 보정에 따라 실제 진단과 다를 수 있어요.</p>
+            </div>
+
+            <div class="review-section profile-finish-section">
+              <div class="review-section-heading"><div><span>Confirm</span><h2>추천을 완성할 정보</h2></div><small>결과와 주변 숍에 사용</small></div>
+              <div class="finish-fields">
+                <label class="text-field"><span>이름 또는 닉네임</span><input id="analysis-name-input" type="text" maxlength="12" placeholder="예: 모이" autocomplete="nickname" /></label>
+                <label class="text-field"><span>활동 지역</span><input id="analysis-area-input" type="text" maxlength="24" placeholder="예: 서울 성수동" autocomplete="address-level2" /></label>
+              </div>
+              <p class="finish-label">오늘 원하는 무드</p>
+              <div class="review-option-grid mood-review-grid" id="review-mood-options" data-review-group="mood">
+                <button type="button" data-value="clean"><strong>클린</strong><small>단정하고 맑은</small></button>
+                <button type="button" data-value="lovely"><strong>러블리</strong><small>부드럽고 사랑스러운</small></button>
+                <button type="button" data-value="chic"><strong>시크</strong><small>도회적이고 또렷한</small></button>
+                <button type="button" data-value="natural"><strong>내추럴</strong><small>편안하고 담백한</small></button>
+              </div>
+              <button class="primary-button full-button review-complete-button" id="analysis-complete-button" type="button" disabled>
+                내가 확인한 기준으로 추천 보기
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="analysis-stage" id="analysis-error" data-analysis-stage="error" hidden>
+            <div class="analysis-error-card">
+              <span class="error-symbol">↻</span>
+              <p class="eyebrow"><span></span> Let’s try another way</p>
+              <h1 id="analysis-error-title">사진을 충분히 읽지 못했어요.</h1>
+              <p id="analysis-error-message">조금 더 밝고 정면에 가까운 사진으로 다시 시도해 주세요.</p>
+              <div class="error-actions">
+                <button class="primary-button" id="analysis-retry-button" type="button">다른 사진으로 다시 시도</button>
+                <button class="secondary-button manual-start-button" type="button">직접 선택해서 계속</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="screen quiz-screen" id="quiz-screen" data-screen="quiz" aria-labelledby="quiz-title">
@@ -190,6 +364,12 @@
           </button>
         </div>
 
+        <div class="analysis-origin-note" id="analysis-origin-note" hidden>
+          <span>✦</span>
+          <p><strong>사진에서 찾은 단서와 내가 확인한 기준</strong>으로 만든 추천이에요.</p>
+          <button id="view-analysis-note" type="button">분석 기준 보기</button>
+        </div>
+
         <div class="result-hero">
           <div class="result-hero-copy">
             <p>Today’s direction</p>
@@ -223,6 +403,7 @@
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="config.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

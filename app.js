@@ -1,4 +1,7 @@
 const STORAGE_KEY = "moi-style-profile-v1";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.2";
+const MIN_SPLASH_MS = 2000;
+const splashStartedAt = performance.now();
 
 const faceShapes = {
   oval: {
@@ -109,7 +112,7 @@ const moods = {
   clean: {
     label: "클린",
     english: "Clean & Clear",
-    accent: "선을 정돈하고 컬러는 한 곳에만",
+    accent: "선을 정돈하고 한 가지 컬러 포인트",
     makeup: "결을 살린 눈썹과 얇은 베이스, 맑은 립",
     piece: "구조적인 셔츠",
     detail: "작은 실버 또는 골드 이어링"
@@ -153,13 +156,21 @@ const state = {
   area: "",
   faceShape: "",
   personalColor: "",
-  mood: ""
+  mood: "",
+  analysisSource: "manual",
+  analysisConfidence: 0,
+  analysisSummary: ""
 };
 
 let currentStep = 0;
 let currentCategory = "today";
 let toastTimer;
+let selectedPhoto = null;
+let analysisResult = null;
+let loadingStepTimer = null;
 
+const splashScreen = document.querySelector("#splash-screen");
+const splashVersion = document.querySelector("#splash-version");
 const screens = [...document.querySelectorAll("[data-screen]")];
 const steps = [...document.querySelectorAll(".quiz-step")];
 const nextButton = document.querySelector("#quiz-next");
@@ -169,6 +180,36 @@ const nameInput = document.querySelector("#name-input");
 const areaInput = document.querySelector("#area-input");
 const savedReportButton = document.querySelector("#saved-report-button");
 const recommendationContent = document.querySelector("#recommendation-content");
+const photoInput = document.querySelector("#photo-input");
+const photoDropzone = document.querySelector("#photo-dropzone");
+const photoPreviewImage = document.querySelector("#photo-preview-image");
+const loadingPhotoImage = document.querySelector("#loading-photo-image");
+const analysisConsent = document.querySelector("#analysis-consent");
+const analyzePhotoButton = document.querySelector("#analyze-photo-button");
+const analysisNameInput = document.querySelector("#analysis-name-input");
+const analysisAreaInput = document.querySelector("#analysis-area-input");
+const analysisCompleteButton = document.querySelector("#analysis-complete-button");
+const validImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const analysisEndpoint = window.MOI_CONFIG?.analysisEndpoint?.trim() || "";
+const demoMode = Boolean(window.MOI_CONFIG?.demoMode);
+
+function hideSplash() {
+  if (!splashScreen) return;
+  splashScreen.classList.add("is-hidden");
+  splashScreen.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-splashing");
+  window.setTimeout(() => splashScreen.remove(), 460);
+}
+
+function scheduleSplashDismiss() {
+  if (splashVersion) splashVersion.textContent = `v${APP_VERSION}`;
+  if (!splashScreen) {
+    document.body.classList.remove("is-splashing");
+    return;
+  }
+  const elapsed = performance.now() - splashStartedAt;
+  window.setTimeout(hideSplash, Math.max(0, MIN_SPLASH_MS - elapsed));
+}
 
 function readSavedProfile() {
   try {
@@ -188,9 +229,286 @@ function showScreen(name) {
   history.replaceState(null, "", name === "home" ? "#home" : `#${name}`);
 }
 
+function showAnalysisStage(name) {
+  document.querySelectorAll("[data-analysis-stage]").forEach((stage) => {
+    const active = stage.dataset.analysisStage === name;
+    stage.hidden = !active;
+    stage.classList.toggle("is-active", active);
+  });
+  document.querySelector("#analysis-back").setAttribute("aria-label", name === "guide" ? "홈으로" : "이전 단계");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function beginPhotoFlow() {
+  selectedPhoto = null;
+  analysisResult = null;
+  photoInput.value = "";
+  analysisConsent.checked = false;
+  analyzePhotoButton.disabled = true;
+  showAnalysisStage("guide");
+  showScreen("analysis");
+}
+
+function resetStateForManual() {
+  Object.assign(state, {
+    name: "",
+    area: "",
+    faceShape: "",
+    personalColor: "",
+    mood: "",
+    analysisSource: "manual",
+    analysisConfidence: 0,
+    analysisSummary: ""
+  });
+}
+
+function loadImageElement(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("사진을 열지 못했어요."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+async function preparePhoto(file) {
+  if (!validImageTypes.has(file.type)) throw new Error("JPG, PNG, WEBP 사진만 사용할 수 있어요.");
+  if (file.size > 8 * 1024 * 1024) throw new Error("사진 크기는 8MB 이하로 선택해 주세요.");
+
+  const source = "createImageBitmap" in window
+    ? await createImageBitmap(file, { imageOrientation: "from-image" })
+    : await loadImageElement(file);
+  const originalWidth = source.width || source.naturalWidth;
+  const originalHeight = source.height || source.naturalHeight;
+
+  if (Math.min(originalWidth, originalHeight) < 480) {
+    if (typeof source.close === "function") source.close();
+    throw new Error("얼굴을 살펴보기에는 사진이 너무 작아요. 더 선명한 사진을 선택해 주세요.");
+  }
+
+  const maxSide = 1440;
+  const scale = Math.min(1, maxSide / Math.max(originalWidth, originalHeight));
+  const width = Math.round(originalWidth * scale);
+  const height = Math.round(originalHeight * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d", { alpha: false });
+  context.fillStyle = "#f7f3ed";
+  context.fillRect(0, 0, width, height);
+  context.drawImage(source, 0, 0, width, height);
+  if (typeof source.close === "function") source.close();
+
+  return {
+    dataUrl: canvas.toDataURL("image/jpeg", 0.86),
+    width,
+    height,
+    name: file.name.replace(/[^a-zA-Z0-9가-힣._-]/g, "_")
+  };
+}
+
+async function handlePhoto(file) {
+  if (!file) return;
+  try {
+    setSelectedPhoto(await preparePhoto(file));
+  } catch (error) {
+    showToast(error.message || "사진을 불러오지 못했어요.");
+    photoInput.value = "";
+  }
+}
+
+function setSelectedPhoto(photo) {
+  selectedPhoto = photo;
+  photoPreviewImage.src = selectedPhoto.dataUrl;
+  loadingPhotoImage.src = selectedPhoto.dataUrl;
+  document.querySelector("#photo-file-caption").textContent = `${selectedPhoto.name} · ${selectedPhoto.width} × ${selectedPhoto.height}`;
+  analysisConsent.checked = false;
+  analyzePhotoButton.disabled = true;
+  showAnalysisStage("preview");
+}
+
+function createDemoPhoto() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 600;
+  canvas.height = 800;
+  const context = canvas.getContext("2d");
+  const background = context.createLinearGradient(0, 0, 600, 800);
+  background.addColorStop(0, "#e7d7c7");
+  background.addColorStop(1, "#b8c4ba");
+  context.fillStyle = background;
+  context.fillRect(0, 0, 600, 800);
+  context.fillStyle = "#3e342e";
+  context.beginPath();
+  context.ellipse(300, 315, 155, 205, 0, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "#c9977c";
+  context.beginPath();
+  context.ellipse(300, 335, 110, 155, 0, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "#f0e8df";
+  context.beginPath();
+  context.ellipse(300, 735, 235, 260, 0, 0, Math.PI * 2);
+  context.fill();
+  return { dataUrl: canvas.toDataURL("image/jpeg", .86), width: 600, height: 800, name: "demo-portrait.jpg" };
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function startLoadingProgress() {
+  let activeIndex = 0;
+  const items = [...document.querySelectorAll("[data-loading-step]")];
+  items.forEach((item, index) => {
+    item.classList.toggle("is-active", index === 0);
+    item.classList.remove("is-done");
+  });
+  clearInterval(loadingStepTimer);
+  loadingStepTimer = setInterval(() => {
+    if (activeIndex >= items.length - 1) return;
+    items[activeIndex].classList.remove("is-active");
+    items[activeIndex].classList.add("is-done");
+    activeIndex += 1;
+    items[activeIndex].classList.add("is-active");
+  }, 1400);
+}
+
+function stopLoadingProgress() {
+  clearInterval(loadingStepTimer);
+  loadingStepTimer = null;
+}
+
+function showAnalysisError(title, message) {
+  stopLoadingProgress();
+  document.querySelector("#analysis-error-title").textContent = title;
+  document.querySelector("#analysis-error-message").textContent = message;
+  showAnalysisStage("error");
+}
+
+async function requestPhotoAnalysis() {
+  if (!selectedPhoto || !analysisConsent.checked) return;
+  if (!analysisEndpoint) {
+    showAnalysisError(
+      "사진 분석 연결이 아직 준비되지 않았어요.",
+      "안전한 분석 서버 연결이 필요해요. 지금은 직접 선택으로 같은 스타일 리포트를 만들 수 있습니다."
+    );
+    return;
+  }
+
+  showAnalysisStage("loading");
+  startLoadingProgress();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 40000);
+
+  try {
+    const [response] = await Promise.all([
+      fetch(analysisEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: selectedPhoto.dataUrl }),
+        signal: controller.signal
+      }),
+      delay(2200)
+    ]);
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.message || "분석 서버가 잠시 쉬고 있어요.");
+    if (!payload.imageUsable) {
+      showAnalysisError("이 사진에서는 단서를 충분히 찾지 못했어요.", payload.quality?.notes || "조금 더 밝고 정면에 가까운 사진으로 다시 시도해 주세요.");
+      return;
+    }
+
+    analysisResult = payload;
+    state.faceShape = faceShapes[payload.faceShape] ? payload.faceShape : "";
+    state.personalColor = personalColors[payload.personalColor] ? payload.personalColor : "";
+    state.mood = "";
+    state.analysisSource = "photo";
+    state.analysisConfidence = Math.round((Number(payload.faceConfidence || 0) + Number(payload.colorConfidence || 0)) / 2);
+    state.analysisSummary = payload.summary || "사진에서 확인한 스타일 단서를 정리했어요.";
+    renderAnalysisReview();
+    showAnalysisStage("review");
+  } catch (error) {
+    const message = error.name === "AbortError"
+      ? "분석 시간이 길어졌어요. 잠시 후 다시 시도해 주세요."
+      : error.message || "분석 중 문제가 생겼어요.";
+    showAnalysisError("잠시 멈췄어요.", message);
+  } finally {
+    clearTimeout(timeout);
+    stopLoadingProgress();
+  }
+}
+
+function optionMarkup(items, suggested) {
+  return Object.entries(items).map(([value, item]) => {
+    const helper = item.summary || item.tip || "";
+    return `<button type="button" data-value="${value}" class="${value === suggested ? "is-suggested" : ""}"><strong>${item.label}</strong><small>${helper.slice(0, 18)}</small></button>`;
+  }).join("");
+}
+
+function renderEvidence(elementId, evidence, fallback) {
+  const list = document.querySelector(elementId);
+  list.replaceChildren();
+  const items = Array.isArray(evidence) && evidence.length ? evidence.slice(0, 3) : [fallback];
+  items.forEach((text) => {
+    const item = document.createElement("li");
+    item.textContent = text;
+    list.append(item);
+  });
+}
+
+function renderAnalysisReview() {
+  document.querySelector("#review-face-options").innerHTML = optionMarkup(faceShapes, analysisResult?.faceShape);
+  document.querySelector("#review-color-options").innerHTML = optionMarkup(personalColors, analysisResult?.personalColor);
+  document.querySelector("#analysis-confidence").textContent = `${state.analysisConfidence}%`;
+  document.querySelector("#analysis-summary").textContent = state.analysisSummary;
+  renderEvidence("#face-evidence", analysisResult?.faceEvidence, "사진 속 얼굴 윤곽을 기준으로 살펴봤어요.");
+  renderEvidence("#color-evidence", analysisResult?.colorEvidence, "사진의 빛과 피부 대비를 함께 살펴봤어요.");
+
+  const accuracyNote = document.querySelector("#color-accuracy-note");
+  const lowConfidence = Number(analysisResult?.colorConfidence || 0) < 65;
+  accuracyNote.textContent = lowConfidence
+    ? "사진의 조명 영향이 커서 컬러 판단의 확신이 낮아요. 평소 잘 받는 색을 떠올리며 직접 선택해 주세요."
+    : "사진 기반의 예상 결과예요. 조명과 카메라 보정에 따라 실제 진단과 다를 수 있어요.";
+  accuracyNote.classList.toggle("is-warning", lowConfidence);
+
+  analysisNameInput.value = state.name || "";
+  analysisAreaInput.value = state.area || "";
+  refreshReviewSelections();
+  updateAnalysisCompleteButton();
+}
+
+function refreshReviewSelections() {
+  document.querySelectorAll("[data-review-group]").forEach((group) => {
+    const selectedValue = state[group.dataset.reviewGroup];
+    group.querySelectorAll("button[data-value]").forEach((button) => {
+      const selected = button.dataset.value === selectedValue;
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+  });
+}
+
+function updateAnalysisCompleteButton() {
+  state.name = analysisNameInput.value;
+  state.area = analysisAreaInput.value;
+  analysisCompleteButton.disabled = !(
+    state.name.trim() &&
+    state.area.trim() &&
+    faceShapes[state.faceShape] &&
+    personalColors[state.personalColor] &&
+    moods[state.mood]
+  );
+}
+
 function beginQuiz({ reset = false } = {}) {
   if (reset) {
-    Object.keys(state).forEach((key) => { state[key] = ""; });
+    resetStateForManual();
   }
   nameInput.value = state.name;
   areaInput.value = state.area;
@@ -221,7 +539,7 @@ function isStepComplete() {
 function refreshStep() {
   steps.forEach((step, index) => { step.hidden = index !== currentStep; });
   progressLabel.textContent = `${currentStep + 1} / ${steps.length}`;
-  progressBar.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
+  progressBar.style.transform = `scaleX(${(currentStep + 1) / steps.length})`;
   nextButton.textContent = currentStep === steps.length - 1 ? "나의 스타일 리포트 보기" : "다음";
   nextButton.disabled = !isStepComplete();
   document.querySelector("#quiz-back").setAttribute("aria-label", currentStep === 0 ? "홈으로" : "이전 단계");
@@ -244,6 +562,10 @@ function renderResultHeader() {
   document.querySelector("#profile-tags").innerHTML = [faceShapes[state.faceShape].label, color.label, moods[state.mood].label]
     .map((tag) => `<span>${tag}</span>`).join("");
   document.querySelector("#result-palette").innerHTML = color.palette.map((hex) => `<i style="background:${hex}"></i>`).join("");
+  document.querySelector("#analysis-origin-note").hidden = state.analysisSource !== "photo";
+  document.querySelector(".result-footer > p").textContent = state.analysisSource === "photo"
+    ? "사진에서 찾은 단서를 내가 확인한 뒤 만든 스타일 가이드예요."
+    : "추천은 선택한 프로필을 바탕으로 만든 스타일 가이드예요.";
 }
 
 function searchLink(query) {
@@ -431,11 +753,66 @@ function showToast(message) {
   toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 2600);
 }
 
-document.querySelectorAll(".start-button").forEach((button) => button.addEventListener("click", () => beginQuiz({ reset: true })));
+document.querySelectorAll(".photo-start-button").forEach((button) => button.addEventListener("click", beginPhotoFlow));
+document.querySelectorAll(".manual-start-button").forEach((button) => button.addEventListener("click", () => beginQuiz({ reset: true })));
+document.querySelector("#demo-photo-button").hidden = !demoMode;
+document.querySelector("#demo-photo-button").addEventListener("click", () => setSelectedPhoto(createDemoPhoto()));
 savedReportButton.addEventListener("click", () => {
   renderResultHeader();
   renderCategory(currentCategory);
   showScreen("result");
+});
+
+photoInput.addEventListener("change", (event) => handlePhoto(event.target.files?.[0]));
+photoDropzone.addEventListener("dragover", (event) => {
+  event.preventDefault();
+  photoDropzone.classList.add("is-dragging");
+});
+photoDropzone.addEventListener("dragleave", () => photoDropzone.classList.remove("is-dragging"));
+photoDropzone.addEventListener("drop", (event) => {
+  event.preventDefault();
+  photoDropzone.classList.remove("is-dragging");
+  handlePhoto(event.dataTransfer?.files?.[0]);
+});
+analysisConsent.addEventListener("change", () => {
+  analyzePhotoButton.disabled = !analysisConsent.checked;
+});
+analyzePhotoButton.addEventListener("click", requestPhotoAnalysis);
+document.querySelector("#replace-photo-button").addEventListener("click", () => {
+  photoInput.value = "";
+  photoInput.click();
+});
+document.querySelector("#analysis-retry-button").addEventListener("click", () => {
+  photoInput.value = "";
+  photoInput.click();
+});
+document.querySelector("#analysis-back").addEventListener("click", () => {
+  const activeStage = document.querySelector("[data-analysis-stage]:not([hidden])")?.dataset.analysisStage;
+  if (activeStage === "guide") return showScreen("home");
+  if (activeStage === "preview") return showAnalysisStage("guide");
+  if (activeStage === "review") return showAnalysisStage("preview");
+  showAnalysisStage("guide");
+});
+
+document.querySelectorAll("[data-review-group]").forEach((group) => {
+  group.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-value]");
+    if (!button) return;
+    state[group.dataset.reviewGroup] = button.dataset.value;
+    refreshReviewSelections();
+    updateAnalysisCompleteButton();
+  });
+});
+analysisNameInput.addEventListener("input", updateAnalysisCompleteButton);
+analysisAreaInput.addEventListener("input", updateAnalysisCompleteButton);
+analysisCompleteButton.addEventListener("click", () => {
+  updateAnalysisCompleteButton();
+  if (analysisCompleteButton.disabled) return;
+  state.analysisSource = "photo";
+  selectedPhoto = null;
+  photoPreviewImage.removeAttribute("src");
+  loadingPhotoImage.removeAttribute("src");
+  completeProfile();
 });
 
 nameInput.addEventListener("input", (event) => {
@@ -478,7 +855,24 @@ document.querySelector("#color-help").addEventListener("click", () => {
   const box = document.querySelector("#color-help-box");
   box.hidden = !box.hidden;
 });
-document.querySelector("#edit-profile").addEventListener("click", () => beginQuiz());
+document.querySelector("#edit-profile").addEventListener("click", () => {
+  if (state.analysisSource === "photo" && analysisResult) {
+    renderAnalysisReview();
+    showAnalysisStage("review");
+    showScreen("analysis");
+  } else {
+    beginQuiz();
+  }
+});
+document.querySelector("#view-analysis-note").addEventListener("click", () => {
+  if (analysisResult) {
+    renderAnalysisReview();
+    showAnalysisStage("review");
+    showScreen("analysis");
+  } else {
+    showToast(state.analysisSummary || "내가 확인한 얼굴형과 퍼스널 컬러를 기준으로 추천했어요.");
+  }
+});
 
 document.querySelector(".category-tabs").addEventListener("click", (event) => {
   const tab = event.target.closest(".category-tab");
@@ -508,3 +902,5 @@ if (window.location.hash === "#result" && hasSavedProfile) {
   renderCategory("today");
   showScreen("result");
 }
+
+window.addEventListener("load", scheduleSplashDismiss, { once: true });
