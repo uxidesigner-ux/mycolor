@@ -1,5 +1,5 @@
 const STORAGE_KEY = "moi-style-profile-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.2";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.3";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -38,6 +38,14 @@ const faceShapes = {
     fringe: "얇고 긴 사이드뱅",
     tip: "턱 주변에 볼륨을 더하고 이마는 가볍게 열어 전체 비율을 맞춰보세요.",
     avoid: "윗부분만 풍성한 짧은 레이어"
+  },
+  unknown: {
+    label: "얼굴형 모름 · 범용",
+    hair: "얼굴선을 가볍게 잇는 소프트 레이어드",
+    fringe: "시스루뱅 또는 자연스러운 사이드뱅",
+    tip: "얼굴형을 특정하지 않고 대부분에게 안정적인 균형을 만드는 추천이에요.",
+    avoid: "얼굴 옆을 완전히 가리는 무거운 실루엣",
+    isUnknown: true
   }
 };
 
@@ -105,6 +113,23 @@ const personalColors = {
     best: ["퓨어 화이트", "네이비", "마젠타"],
     outfit: "화이트 셔츠 + 네이비 팬츠",
     avoid: "누렇게 바랜 베이지나 흐릿한 웜 파스텔"
+  },
+  unknown: {
+    label: "퍼스널컬러 모름 · 뉴트럴",
+    title: "무난한 온도와\n부드러운 균형.",
+    summary: "퍼스널컬러를 확정하지 않고 웜·쿨 부담이 적은 뉴트럴 팔레트로 시작해요.",
+    palette: ["#efe4d9", "#c9b8a8", "#8d8077", "#e8b6a2"],
+    hairColor: "뉴트럴 브라운",
+    hairAlt: ["소프트 코코아", "밀크 브라운", "로즈 베이지"],
+    brow: ["뉴트럴 브라운", "#74645a"],
+    lens: ["소프트 브라운", "#867368"],
+    lip: ["말린 장미 베이지", "#bd766d"],
+    shadow: ["토프 베이지", "#a89284"],
+    nail: ["밀키 로즈", "#d3a397"],
+    best: ["소프트 아이보리", "토프", "더스티 로즈"],
+    outfit: "아이보리 셔츠 + 토프 팬츠",
+    avoid: "형광에 가까운 고채도 컬러나 얼굴을 누르는 과한 블랙",
+    isUnknown: true
   }
 };
 
@@ -144,11 +169,11 @@ const moods = {
 };
 
 const labels = {
-  today: ["Today’s edit", "오늘 바로 적용할 세 가지"],
-  hair: ["Hair direction", "얼굴형과 퍼스널 컬러를 함께 반영했어요"],
-  beauty: ["Beauty palette", "메이크업 컬러를 한 팔레트로 정리했어요"],
-  wear: ["Daily wear", "잘 받는 색과 원하는 무드의 교집합이에요"],
-  care: ["Care rhythm", "스타일이 흐트러지기 전 관리 시점이에요"]
+  today: ["오늘 바로 하기", "헤어·메이크업·옷 핵심만 먼저 보여드려요"],
+  hair: ["헤어 추천", "얼굴형과 퍼스널컬러를 함께 반영했어요"],
+  beauty: ["뷰티 팔레트", "메이크업 컬러를 한 팔레트로 정리했어요"],
+  wear: ["오늘의 옷", "잘 받는 색과 원하는 무드의 교집합이에요"],
+  care: ["관리 주기", "스타일이 흐트러지기 전 관리 시점이에요"]
 };
 
 const state = {
@@ -177,20 +202,28 @@ const nextButton = document.querySelector("#quiz-next");
 const progressLabel = document.querySelector("#progress-label");
 const progressBar = document.querySelector("#progress-bar");
 const nameInput = document.querySelector("#name-input");
-const areaInput = document.querySelector("#area-input");
 const savedReportButton = document.querySelector("#saved-report-button");
+const savedReportInlineButton = document.querySelector("#saved-report-inline-button");
 const recommendationContent = document.querySelector("#recommendation-content");
 const photoInput = document.querySelector("#photo-input");
 const photoDropzone = document.querySelector("#photo-dropzone");
+const photoUnavailableCard = document.querySelector("#photo-unavailable-card");
+const photoAvailabilityNote = document.querySelector("#photo-availability-note");
 const photoPreviewImage = document.querySelector("#photo-preview-image");
 const loadingPhotoImage = document.querySelector("#loading-photo-image");
 const analysisConsent = document.querySelector("#analysis-consent");
 const analyzePhotoButton = document.querySelector("#analyze-photo-button");
 const analysisNameInput = document.querySelector("#analysis-name-input");
-const analysisAreaInput = document.querySelector("#analysis-area-input");
 const analysisCompleteButton = document.querySelector("#analysis-complete-button");
+const analysisCompleteReason = document.querySelector("#analysis-complete-reason");
+const quizNextReason = document.querySelector("#quiz-next-reason");
+const resultSummaryGrid = document.querySelector("#result-summary-grid");
+const areaSettingCard = document.querySelector("#area-setting-card");
+const resultAreaInput = document.querySelector("#result-area-input");
+const saveAreaButton = document.querySelector("#save-area-button");
 const validImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const analysisEndpoint = window.MOI_CONFIG?.analysisEndpoint?.trim() || "";
+const photoAnalysisAvailable = Boolean(analysisEndpoint) && window.MOI_CONFIG?.photoAnalysisEnabled === true;
 const demoMode = Boolean(window.MOI_CONFIG?.demoMode);
 
 function hideSplash() {
@@ -211,12 +244,40 @@ function scheduleSplashDismiss() {
   window.setTimeout(hideSplash, Math.max(0, MIN_SPLASH_MS - elapsed));
 }
 
+function normalizeText(value, maxLength = 48) {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+function normalizeProfile(profile) {
+  if (!profile || typeof profile !== "object") return null;
+  const normalized = {
+    ...state,
+    ...profile,
+    name: normalizeText(profile.name, 12),
+    area: normalizeText(profile.area, 24),
+    faceShape: faceShapes[profile.faceShape] ? profile.faceShape : "unknown",
+    personalColor: personalColors[profile.personalColor] ? profile.personalColor : "unknown",
+    mood: moods[profile.mood] ? profile.mood : "",
+    analysisSource: profile.analysisSource === "photo" ? "photo" : "manual",
+    analysisConfidence: Number(profile.analysisConfidence || 0),
+    analysisSummary: normalizeText(profile.analysisSummary, 160)
+  };
+  return normalized.name && normalized.mood ? normalized : null;
+}
+
+function revealSavedEntryPoints() {
+  savedReportButton.hidden = false;
+  if (savedReportInlineButton) savedReportInlineButton.hidden = false;
+}
+
 function readSavedProfile() {
   try {
     const profile = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (!profile || !faceShapes[profile.faceShape] || !personalColors[profile.personalColor] || !moods[profile.mood]) return false;
-    Object.assign(state, profile);
-    savedReportButton.hidden = false;
+    const normalized = normalizeProfile(profile);
+    if (!normalized) return false;
+    Object.assign(state, normalized);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    revealSavedEntryPoints();
     return true;
   } catch {
     return false;
@@ -239,7 +300,43 @@ function showAnalysisStage(name) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+function syncPhotoAvailability() {
+  const heroManualButton = document.querySelector(".hero-primary-action");
+  const heroPhotoButton = document.querySelector(".photo-beta-button");
+  if (photoUnavailableCard) photoUnavailableCard.hidden = photoAnalysisAvailable;
+
+  if (photoAnalysisAvailable) {
+    if (heroPhotoButton) {
+      heroPhotoButton.classList.remove("secondary-button", "photo-beta-button");
+      heroPhotoButton.classList.add("primary-button", "hero-photo-primary");
+      heroPhotoButton.removeAttribute("aria-describedby");
+      heroPhotoButton.innerHTML = `사진으로 스타일 기준 찾기 ${arrowIcon()}`;
+    }
+    if (heroManualButton) {
+      heroManualButton.classList.remove("primary-button", "hero-primary-action");
+      heroManualButton.classList.add("manual-start-button");
+      heroManualButton.innerHTML = "사진 없이 직접 선택";
+    }
+    if (photoAvailabilityNote) photoAvailabilityNote.hidden = true;
+    return;
+  }
+
+  document.querySelectorAll(".photo-start-button").forEach((button) => {
+    button.setAttribute("aria-describedby", "photo-availability-note");
+  });
+}
+
+function showPhotoUnavailableNotice() {
+  if (photoAvailabilityNote) photoAvailabilityNote.hidden = false;
+  if (photoUnavailableCard) photoUnavailableCard.hidden = false;
+  showToast("사진 분석은 현재 준비 중이에요. 지금은 직접 선택으로 리포트를 만들 수 있습니다.");
+}
+
 function beginPhotoFlow() {
+  if (!photoAnalysisAvailable) {
+    showPhotoUnavailableNotice();
+    return;
+  }
   selectedPhoto = null;
   analysisResult = null;
   photoInput.value = "";
@@ -394,11 +491,9 @@ function showAnalysisError(title, message) {
 
 async function requestPhotoAnalysis() {
   if (!selectedPhoto || !analysisConsent.checked) return;
-  if (!analysisEndpoint) {
-    showAnalysisError(
-      "사진 분석 연결이 아직 준비되지 않았어요.",
-      "안전한 분석 서버 연결이 필요해요. 지금은 직접 선택으로 같은 스타일 리포트를 만들 수 있습니다."
-    );
+  if (!photoAnalysisAvailable) {
+    showPhotoUnavailableNotice();
+    showAnalysisStage("guide");
     return;
   }
 
@@ -478,7 +573,6 @@ function renderAnalysisReview() {
   accuracyNote.classList.toggle("is-warning", lowConfidence);
 
   analysisNameInput.value = state.name || "";
-  analysisAreaInput.value = state.area || "";
   refreshReviewSelections();
   updateAnalysisCompleteButton();
 }
@@ -496,14 +590,22 @@ function refreshReviewSelections() {
 
 function updateAnalysisCompleteButton() {
   state.name = analysisNameInput.value;
-  state.area = analysisAreaInput.value;
+  const missing = [];
+  if (!state.name.trim()) missing.push("닉네임");
+  if (!faceShapes[state.faceShape]) missing.push("얼굴형");
+  if (!personalColors[state.personalColor]) missing.push("퍼스널컬러");
+  if (!moods[state.mood]) missing.push("무드");
   analysisCompleteButton.disabled = !(
-    state.name.trim() &&
-    state.area.trim() &&
+    !missing.length &&
     faceShapes[state.faceShape] &&
     personalColors[state.personalColor] &&
     moods[state.mood]
   );
+  if (analysisCompleteReason) {
+    analysisCompleteReason.textContent = missing.length
+      ? `${missing.join(", ")}을 선택하면 추천을 볼 수 있어요.`
+      : "지역은 주변 숍을 볼 때 입력해도 괜찮아요.";
+  }
 }
 
 function beginQuiz({ reset = false } = {}) {
@@ -511,7 +613,6 @@ function beginQuiz({ reset = false } = {}) {
     resetStateForManual();
   }
   nameInput.value = state.name;
-  areaInput.value = state.area;
   currentStep = 0;
   refreshChoices();
   refreshStep();
@@ -530,10 +631,20 @@ function refreshChoices() {
 }
 
 function isStepComplete() {
-  if (currentStep === 0) return state.name.trim().length > 0 && state.area.trim().length > 0;
+  if (currentStep === 0) return state.name.trim().length > 0;
   if (currentStep === 1) return Boolean(state.faceShape);
   if (currentStep === 2) return Boolean(state.personalColor);
   return Boolean(state.mood);
+}
+
+function stepReason() {
+  if (currentStep === 0 && !state.name.trim()) return "닉네임을 입력하면 다음으로 갈 수 있어요.";
+  if (currentStep === 1 && !state.faceShape) return "얼굴형을 모르겠다면 ‘잘 모르겠어요’를 선택해도 괜찮아요.";
+  if (currentStep === 2 && !state.personalColor) return "퍼스널컬러를 모르겠다면 ‘잘 모르겠어요’를 선택해도 괜찮아요.";
+  if (currentStep === 3 && !state.mood) return "오늘 원하는 무드를 선택하면 리포트를 만들 수 있어요.";
+  return currentStep === 0
+    ? "활동 지역은 주변 숍을 볼 때 나중에 입력해요."
+    : "좋아요. 다음 단계로 이어갈 수 있어요.";
 }
 
 function refreshStep() {
@@ -542,30 +653,38 @@ function refreshStep() {
   progressBar.style.transform = `scaleX(${(currentStep + 1) / steps.length})`;
   nextButton.textContent = currentStep === steps.length - 1 ? "나의 스타일 리포트 보기" : "다음";
   nextButton.disabled = !isStepComplete();
+  if (quizNextReason) quizNextReason.textContent = stepReason();
   document.querySelector("#quiz-back").setAttribute("aria-label", currentStep === 0 ? "홈으로" : "이전 단계");
 }
 
 function completeProfile() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  savedReportButton.hidden = false;
+  revealSavedEntryPoints();
   currentCategory = "today";
-  document.querySelectorAll(".category-tab").forEach((tab) => tab.classList.toggle("is-active", tab.dataset.category === "today"));
+  updateCategoryTabs("today");
   renderResultHeader();
   renderCategory("today");
   showScreen("result");
 }
 
 function renderResultHeader() {
-  const color = personalColors[state.personalColor];
-  document.querySelector("#result-name").textContent = state.name.trim();
+  const face = faceShapes[state.faceShape] || faceShapes.unknown;
+  const color = personalColors[state.personalColor] || personalColors.unknown;
+  const mood = moods[state.mood];
+  document.querySelector("#result-name").textContent = state.name.trim() || "모이";
   document.querySelector("#direction-title").innerHTML = color.title.replace("\n", "<br />");
-  document.querySelector("#profile-tags").innerHTML = [faceShapes[state.faceShape].label, color.label, moods[state.mood].label]
-    .map((tag) => `<span>${tag}</span>`).join("");
+  document.querySelector("#profile-tags").innerHTML = [
+    { label: face.label, hint: face.isUnknown ? "범용 추천" : "얼굴형" },
+    { label: color.label, hint: color.isUnknown ? "기본 추천" : "퍼스널컬러" },
+    { label: mood.label, hint: "무드" }
+  ].map((tag) => `<span><small>${tag.hint}</small>${tag.label}</span>`).join("");
   document.querySelector("#result-palette").innerHTML = color.palette.map((hex) => `<i style="background:${hex}"></i>`).join("");
   document.querySelector("#analysis-origin-note").hidden = state.analysisSource !== "photo";
   document.querySelector(".result-footer > p").textContent = state.analysisSource === "photo"
     ? "사진에서 찾은 단서를 내가 확인한 뒤 만든 스타일 가이드예요."
     : "추천은 선택한 프로필을 바탕으로 만든 스타일 가이드예요.";
+  renderResultSummary();
+  renderAreaSetting();
 }
 
 function searchLink(query) {
@@ -573,11 +692,89 @@ function searchLink(query) {
 }
 
 function mapLink(query) {
-  return `https://map.naver.com/p/search/${encodeURIComponent(`${state.area} ${query}`)}`;
+  return `https://map.naver.com/p/search/${encodeURIComponent(`${areaLabel()} ${query}`.trim())}`;
 }
 
 function arrowIcon() {
   return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>';
+}
+
+function areaLabel() {
+  return state.area?.trim() || "";
+}
+
+function renderResultSummary() {
+  if (!resultSummaryGrid) return;
+  const face = faceShapes[state.faceShape] || faceShapes.unknown;
+  const color = personalColors[state.personalColor] || personalColors.unknown;
+  const mood = moods[state.mood];
+  const faceNote = face.isUnknown ? "얼굴형을 특정하지 않은 범용 추천" : face.label;
+  const colorNote = color.isUnknown ? "무난한 뉴트럴 팔레트" : color.label;
+  resultSummaryGrid.innerHTML = `
+    <article class="summary-card">
+      <span class="summary-label">내 기준</span>
+      <h2>${faceNote}</h2>
+      <p>${colorNote} · ${mood.label}</p>
+    </article>
+    <article class="summary-card emphasis">
+      <span class="summary-label">오늘 바로 하기</span>
+      <ul>
+        <li><strong>헤어</strong><span>${face.hair}</span></li>
+        <li><strong>메이크업</strong><span>${color.lip[0]} + ${color.shadow[0]}</span></li>
+        <li><strong>옷</strong><span>${color.outfit}</span></li>
+      </ul>
+    </article>
+    <article class="summary-card caution">
+      <span class="summary-label">피하면 좋은 것</span>
+      <ul>
+        <li><strong>컬러</strong><span>${color.avoid}</span></li>
+        <li><strong>헤어</strong><span>${face.avoid}</span></li>
+      </ul>
+    </article>
+  `;
+}
+
+function renderAreaSetting() {
+  if (!areaSettingCard || !resultAreaInput) return;
+  const area = areaLabel();
+  resultAreaInput.value = area;
+  areaSettingCard.classList.toggle("has-area", Boolean(area));
+  document.querySelector("#area-setting-copy").textContent = area
+    ? `${area} 기준으로 주변 숍 링크를 열 수 있어요.`
+    : "지역은 리포트 생성에는 필요 없고, 지도 링크를 열 때만 사용해요.";
+  saveAreaButton.textContent = area ? "지역 변경" : "지역 저장";
+}
+
+function saveAreaFromResult() {
+  state.area = normalizeText(resultAreaInput.value, 24);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  renderAreaSetting();
+  renderCategory(currentCategory);
+  showToast(state.area ? `${state.area} 기준으로 주변 숍을 볼게요.` : "활동 지역을 비웠어요.");
+}
+
+function focusAreaSetting() {
+  areaSettingCard?.classList.add("needs-attention");
+  areaSettingCard?.scrollIntoView({ behavior: "smooth", block: "center" });
+  window.setTimeout(() => resultAreaInput?.focus(), 320);
+  window.setTimeout(() => areaSettingCard?.classList.remove("needs-attention"), 1600);
+}
+
+function openMapSearch(query) {
+  if (!areaLabel()) {
+    focusAreaSetting();
+    showToast("주변 숍을 보려면 활동 지역을 먼저 입력해 주세요.");
+    return;
+  }
+  window.open(mapLink(query), "_blank", "noopener,noreferrer");
+}
+
+function updateCategoryTabs(category) {
+  document.querySelectorAll(".category-tab").forEach((tab) => {
+    const selected = tab.dataset.category === category;
+    tab.classList.toggle("is-active", selected);
+    tab.setAttribute("aria-pressed", String(selected));
+  });
 }
 
 function renderHeading(category) {
@@ -586,9 +783,10 @@ function renderHeading(category) {
 }
 
 function renderToday() {
-  const face = faceShapes[state.faceShape];
-  const color = personalColors[state.personalColor];
+  const face = faceShapes[state.faceShape] || faceShapes.unknown;
+  const color = personalColors[state.personalColor] || personalColors.unknown;
   const mood = moods[state.mood];
+  const area = areaLabel();
   return `${renderHeading("today")}
     <article class="today-lead">
       <div class="today-lead-copy">
@@ -612,17 +810,18 @@ function renderToday() {
         <div class="chip-row"><span class="chip">${color.brow[0]}</span><span class="chip">${color.shadow[0]}</span></div>
       </article>
       <article class="recommendation-card full">
-        <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">NEAR ${state.area.toUpperCase()}</span></div>
+        <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">${area ? `NEAR ${area.toUpperCase()}` : "NEARBY"}</span></div>
         <h3>내 스타일을 잘 아는 가까운 숍</h3>
-        <p>${state.area} 주변의 퍼스널 컬러 전문 헤어·메이크업 숍을 지도에서 바로 살펴보세요.</p>
-        <a class="action-link" href="${mapLink("퍼스널 컬러 헤어 메이크업")}" target="_blank" rel="noreferrer">주변 숍 찾아보기 ${arrowIcon()}</a>
+        <p>${area ? `${area} 주변의` : "활동 지역을 설정하면"} 퍼스널컬러 전문 헤어·메이크업 숍을 지도에서 바로 살펴볼 수 있어요.</p>
+        <button class="action-link map-action-button" type="button" data-map-query="퍼스널 컬러 헤어 메이크업">주변 숍 찾아보기 ${arrowIcon()}</button>
       </article>
     </div>`;
 }
 
 function renderHair() {
-  const face = faceShapes[state.faceShape];
-  const color = personalColors[state.personalColor];
+  const face = faceShapes[state.faceShape] || faceShapes.unknown;
+  const color = personalColors[state.personalColor] || personalColors.unknown;
+  const area = areaLabel();
   return `${renderHeading("hair")}
     <div class="recommendation-grid">
       <article class="recommendation-card full">
@@ -643,9 +842,9 @@ function renderHair() {
       </article>
       <article class="recommendation-card">
         <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">SALON</span></div>
-        <h3>${state.area} 헤어숍 찾기</h3>
+        <h3>${area ? `${area} 헤어숍 찾기` : "헤어숍 찾기"}</h3>
         <p>상담 전 이 리포트의 헤어스타일과 컬러 이름을 함께 보여주면 더 정확해요.</p>
-        <a class="action-link" href="${mapLink(`${color.hairColor} 미용실`)}" target="_blank" rel="noreferrer">지도에서 보기 ${arrowIcon()}</a>
+        <button class="action-link map-action-button" type="button" data-map-query="${color.hairColor} 미용실">지도에서 보기 ${arrowIcon()}</button>
       </article>
     </div>`;
 }
@@ -655,8 +854,9 @@ function beautyRow(label, item) {
 }
 
 function renderBeauty() {
-  const color = personalColors[state.personalColor];
+  const color = personalColors[state.personalColor] || personalColors.unknown;
   const mood = moods[state.mood];
+  const area = areaLabel();
   return `${renderHeading("beauty")}
     <div class="recommendation-grid">
       <article class="recommendation-card full">
@@ -680,14 +880,14 @@ function renderBeauty() {
       <article class="recommendation-card">
         <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">BEAUTY SHOP</span></div>
         <h3>뷰티 전문가 만나기</h3>
-        <p>중요한 날이라면 ${state.area} 주변 메이크업·네일숍에서 내 팔레트로 상담해 보세요.</p>
-        <a class="action-link" href="${mapLink("메이크업 네일샵")}" target="_blank" rel="noreferrer">주변 숍 보기 ${arrowIcon()}</a>
+        <p>중요한 날이라면 ${area ? `${area} 주변` : "활동 지역 주변"} 메이크업·네일숍에서 내 팔레트로 상담해 보세요.</p>
+        <button class="action-link map-action-button" type="button" data-map-query="메이크업 네일샵">주변 숍 보기 ${arrowIcon()}</button>
       </article>
     </div>`;
 }
 
 function renderWear() {
-  const color = personalColors[state.personalColor];
+  const color = personalColors[state.personalColor] || personalColors.unknown;
   const mood = moods[state.mood];
   return `${renderHeading("wear")}
     <article class="today-lead">
@@ -757,11 +957,13 @@ document.querySelectorAll(".photo-start-button").forEach((button) => button.addE
 document.querySelectorAll(".manual-start-button").forEach((button) => button.addEventListener("click", () => beginQuiz({ reset: true })));
 document.querySelector("#demo-photo-button").hidden = !demoMode;
 document.querySelector("#demo-photo-button").addEventListener("click", () => setSelectedPhoto(createDemoPhoto()));
-savedReportButton.addEventListener("click", () => {
+function openSavedReport() {
   renderResultHeader();
   renderCategory(currentCategory);
   showScreen("result");
-});
+}
+savedReportButton.addEventListener("click", openSavedReport);
+savedReportInlineButton?.addEventListener("click", openSavedReport);
 
 photoInput.addEventListener("change", (event) => handlePhoto(event.target.files?.[0]));
 photoDropzone.addEventListener("dragover", (event) => {
@@ -804,7 +1006,6 @@ document.querySelectorAll("[data-review-group]").forEach((group) => {
   });
 });
 analysisNameInput.addEventListener("input", updateAnalysisCompleteButton);
-analysisAreaInput.addEventListener("input", updateAnalysisCompleteButton);
 analysisCompleteButton.addEventListener("click", () => {
   updateAnalysisCompleteButton();
   if (analysisCompleteButton.disabled) return;
@@ -817,10 +1018,6 @@ analysisCompleteButton.addEventListener("click", () => {
 
 nameInput.addEventListener("input", (event) => {
   state.name = event.target.value;
-  refreshStep();
-});
-areaInput.addEventListener("input", (event) => {
-  state.area = event.target.value;
   refreshStep();
 });
 
@@ -853,7 +1050,10 @@ document.querySelector("#quiz-back").addEventListener("click", () => {
 document.querySelector("#quiz-close").addEventListener("click", () => showScreen("home"));
 document.querySelector("#color-help").addEventListener("click", () => {
   const box = document.querySelector("#color-help-box");
-  box.hidden = !box.hidden;
+  const hidden = !box.hidden;
+  box.hidden = hidden;
+  document.querySelector("#color-help").setAttribute("aria-expanded", String(!hidden));
+  document.querySelector("#color-help").textContent = hidden ? "퍼스널컬러 고르는 힌트 보기" : "퍼스널컬러 고르는 힌트 접기";
 });
 document.querySelector("#edit-profile").addEventListener("click", () => {
   if (state.analysisSource === "photo" && analysisResult) {
@@ -877,25 +1077,64 @@ document.querySelector("#view-analysis-note").addEventListener("click", () => {
 document.querySelector(".category-tabs").addEventListener("click", (event) => {
   const tab = event.target.closest(".category-tab");
   if (!tab) return;
-  document.querySelectorAll(".category-tab").forEach((item) => item.classList.toggle("is-active", item === tab));
+  updateCategoryTabs(tab.dataset.category);
   renderCategory(tab.dataset.category);
 });
 
-document.querySelector("#share-result").addEventListener("click", async () => {
-  const color = personalColors[state.personalColor];
-  const text = `나의 MOI 스타일: ${color.label} · ${faceShapes[state.faceShape].label} · ${moods[state.mood].label}`;
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: "나의 MOI 스타일", text, url: window.location.href });
-    } else {
-      await navigator.clipboard.writeText(`${text}\n${window.location.href}`);
-      showToast("스타일 결과 링크를 복사했어요.");
-    }
-  } catch (error) {
-    if (error.name !== "AbortError") showToast("공유하지 못했어요. 잠시 후 다시 시도해 주세요.");
+recommendationContent.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-map-query]");
+  if (!button) return;
+  openMapSearch(button.dataset.mapQuery);
+});
+
+saveAreaButton?.addEventListener("click", saveAreaFromResult);
+resultAreaInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    saveAreaFromResult();
   }
 });
 
+document.querySelector("#share-result").addEventListener("click", async () => {
+  const color = personalColors[state.personalColor] || personalColors.unknown;
+  const face = faceShapes[state.faceShape] || faceShapes.unknown;
+  const text = `나의 MOI 스타일: ${color.label} · ${face.label} · ${moods[state.mood].label}`;
+  const shareText = `${text}\n${window.location.href}`;
+  const copyShareText = async () => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(shareText);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = shareText;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.append(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      if (!copied) throw new Error("copy failed");
+    }
+    showToast("스타일 결과 링크를 복사했어요.");
+  };
+  try {
+    const prefersNativeShare = navigator.share && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if (prefersNativeShare) {
+      await navigator.share({ title: "나의 MOI 스타일", text, url: window.location.href });
+    } else {
+      await copyShareText();
+    }
+  } catch (error) {
+    if (error.name === "AbortError") return;
+    try {
+      await copyShareText();
+    } catch {
+      showToast("공유하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    }
+  }
+});
+
+syncPhotoAvailability();
 const hasSavedProfile = readSavedProfile();
 if (window.location.hash === "#result" && hasSavedProfile) {
   renderResultHeader();

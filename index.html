@@ -20,7 +20,7 @@
         <p>Daily personal stylist</p>
       </div>
       <div class="splash-loading-bar" aria-hidden="true"><span></span></div>
-      <p class="splash-version" id="splash-version">v0.1.2</p>
+      <p class="splash-version" id="splash-version">v0.1.3</p>
     </div>
 
     <header class="site-header">
@@ -29,7 +29,7 @@
         <span>MOI</span>
       </a>
       <button class="header-link" id="saved-report-button" type="button" hidden>
-        내 스타일
+        저장된 스타일 보기
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
       </button>
     </header>
@@ -37,18 +37,23 @@
     <main>
       <section class="screen landing-screen is-active" id="home-screen" data-screen="home">
         <div class="hero-copy reveal">
-          <p class="eyebrow"><span></span> AI가 제안하고, 내가 확정하는 스타일 기준</p>
-          <h1>매일 아침,<br /><em>나답게</em> 고르는 법.</h1>
+          <p class="eyebrow"><span></span> 오늘 바로 쓰는 스타일 진단 도구</p>
+          <h1>내 얼굴형과<br /><em>퍼스널컬러</em>로 오늘의 스타일 추천</h1>
           <p class="hero-description">
-            사진 한 장이나 직접 선택으로 얼굴형, 퍼스널 컬러, 원하는 무드를 정리하고<br class="desktop-only" />
+            사진 한 장 또는 직접 선택으로 얼굴형, 퍼스널컬러, 무드를 정리하고<br class="desktop-only" />
             오늘 바로 시도할 헤어·메이크업·옷 추천을 받아보세요.
           </p>
           <div class="hero-actions">
-            <button class="primary-button photo-start-button" type="button">
-              사진 한 장으로 시작하기
+            <button class="primary-button manual-start-button hero-primary-action" type="button">
+              사진 없이 직접 선택
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
             </button>
-            <button class="manual-start-button" type="button">직접 선택할게요</button>
+            <button class="secondary-button photo-start-button photo-beta-button" type="button" aria-describedby="photo-availability-note">
+              사진 분석 준비 중
+              <span class="button-badge">BETA</span>
+            </button>
+            <button class="saved-inline-button" id="saved-report-inline-button" type="button" hidden>저장된 스타일 보기</button>
+            <p class="photo-availability-note" id="photo-availability-note">사진 분석은 준비 중이에요. 지금은 직접 선택으로 같은 스타일 리포트를 만들 수 있습니다.</p>
             <ul class="trust-row" aria-label="사진 분석 안내">
               <li>30초 안에 완료</li>
               <li>사진 저장 안 함</li>
@@ -56,8 +61,8 @@
             </ul>
           </div>
           <ol class="hero-flow" aria-label="MOI 추천 진행 방식">
-            <li><strong>사진 선택</strong><span>또는 직접 입력</span></li>
-            <li><strong>AI 제안 확인</strong><span>판정이 아닌 첫 단서</span></li>
+            <li><strong>기준 선택</strong><span>모르면 넘어갈 수 있게</span></li>
+            <li><strong>추천 요약</strong><span>오늘 할 것부터 확인</span></li>
             <li><strong>내가 확정</strong><span>추천은 내 기준으로</span></li>
           </ol>
         </div>
@@ -67,17 +72,16 @@
           <div class="orbit orbit-two"></div>
           <div class="look-card look-card-main">
             <div class="look-card-top">
-              <span>Today’s mood</span>
-              <span class="temperature">21°</span>
+              <span>오늘의 추천</span>
+              <span class="temperature">3분 리포트</span>
             </div>
-            <div class="portrait-art" aria-hidden="true">
-              <span class="portrait-sun"></span>
-              <span class="portrait-head"></span>
-              <span class="portrait-hair"></span>
-              <span class="portrait-body"></span>
+            <div class="result-preview-list" aria-hidden="true">
+              <div><span>헤어</span><strong>소프트 레이어드 C컬</strong></div>
+              <div><span>립</span><strong>로지 코랄 포인트</strong></div>
+              <div class="avoid"><span>피해야 할 컬러</span><strong>탁한 차콜</strong></div>
             </div>
             <div class="look-card-bottom">
-              <p>Soft &amp; Natural</p>
+              <p>얼굴형 · 퍼스널컬러 · 무드</p>
               <div class="mini-palette"><i></i><i></i><i></i><i></i></div>
             </div>
           </div>
@@ -136,6 +140,12 @@
           </div>
 
           <div class="analysis-stage is-active" id="analysis-guide" data-analysis-stage="guide">
+            <div class="photo-unavailable-card" id="photo-unavailable-card" hidden>
+              <strong>사진 분석은 현재 준비 중이에요.</strong>
+              <p>지금은 사진 없이 직접 선택해도 같은 형식의 스타일 리포트를 만들 수 있습니다.</p>
+              <button class="manual-start-button" type="button">사진 없이 직접 선택</button>
+            </div>
+
             <div class="analysis-heading">
               <p class="eyebrow"><span></span> 사진은 제안의 시작일 뿐이에요</p>
               <h1 id="analysis-title">잘 나온 사진보다,<br /><em>나답게 나온 사진.</em></h1>
@@ -245,10 +255,9 @@
             </div>
 
             <div class="review-section profile-finish-section">
-              <div class="review-section-heading"><div><span>Confirm</span><h2>추천을 완성할 정보</h2></div><small>결과와 주변 숍에 사용</small></div>
+              <div class="review-section-heading"><div><span>Confirm</span><h2>추천을 완성할 정보</h2></div><small>지역은 주변 숍을 볼 때 입력</small></div>
               <div class="finish-fields">
                 <label class="text-field"><span>이름 또는 닉네임</span><input id="analysis-name-input" type="text" maxlength="12" placeholder="예: 모이" autocomplete="nickname" /></label>
-                <label class="text-field"><span>활동 지역</span><input id="analysis-area-input" type="text" maxlength="24" placeholder="예: 서울 성수동" autocomplete="address-level2" /></label>
               </div>
               <p class="finish-label">오늘 원하는 무드</p>
               <div class="review-option-grid mood-review-grid" id="review-mood-options" data-review-group="mood">
@@ -261,6 +270,7 @@
                 내가 확인한 기준으로 추천 보기
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
               </button>
+              <p class="button-reason" id="analysis-complete-reason">닉네임과 무드를 선택하면 추천을 볼 수 있어요.</p>
             </div>
           </div>
 
@@ -295,14 +305,10 @@
           <form id="style-form">
             <fieldset class="quiz-step" data-step="0">
               <legend id="quiz-title">먼저, 어떻게 불러드릴까요?</legend>
-              <p class="step-description">추천 결과와 가까운 숍을 찾는 데만 사용해요.</p>
+              <p class="step-description">닉네임만 있으면 시작할 수 있어요. 활동 지역은 주변 숍을 볼 때 물어볼게요.</p>
               <label class="text-field">
                 <span>이름 또는 닉네임</span>
                 <input id="name-input" name="name" type="text" maxlength="12" placeholder="예: 모이" autocomplete="nickname" />
-              </label>
-              <label class="text-field">
-                <span>활동 지역</span>
-                <input id="area-input" name="area" type="text" maxlength="24" placeholder="예: 서울 성수동" autocomplete="address-level2" />
               </label>
             </fieldset>
 
@@ -315,6 +321,7 @@
                 <button class="choice-card" type="button" data-value="square"><span class="face-icon face-square"></span><strong>각진형</strong><small>또렷한 턱선</small></button>
                 <button class="choice-card" type="button" data-value="long"><span class="face-icon face-long"></span><strong>긴형</strong><small>세로로 긴 윤곽</small></button>
                 <button class="choice-card" type="button" data-value="heart"><span class="face-icon face-heart"></span><strong>하트형</strong><small>넓은 이마, 좁은 턱</small></button>
+                <button class="choice-card unknown-choice" type="button" data-value="unknown"><span class="unknown-icon">?</span><strong>잘 모르겠어요</strong><small>범용 균형 추천으로 볼게요</small></button>
               </div>
             </fieldset>
 
@@ -326,10 +333,11 @@
                 <button class="choice-card color-choice summer" type="button" data-value="summer"><span class="color-dots"><i></i><i></i><i></i></span><strong>여름 쿨</strong><small>맑고 부드럽게</small></button>
                 <button class="choice-card color-choice autumn" type="button" data-value="autumn"><span class="color-dots"><i></i><i></i><i></i></span><strong>가을 웜</strong><small>깊고 편안하게</small></button>
                 <button class="choice-card color-choice winter" type="button" data-value="winter"><span class="color-dots"><i></i><i></i><i></i></span><strong>겨울 쿨</strong><small>선명하고 세련되게</small></button>
+                <button class="choice-card color-choice neutral unknown-choice" type="button" data-value="unknown"><span class="color-dots"><i></i><i></i><i></i></span><strong>잘 모르겠어요</strong><small>무난한 뉴트럴 팔레트</small></button>
               </div>
-              <button class="help-link" id="color-help" type="button">내 퍼스널 컬러를 잘 모르겠어요</button>
-              <div class="color-help-box" id="color-help-box" hidden>
-                <strong>작은 힌트</strong>
+              <button class="help-link" id="color-help" type="button" aria-expanded="true" aria-controls="color-help-box">퍼스널컬러 고르는 힌트 접기</button>
+              <div class="color-help-box" id="color-help-box">
+                <strong>고르는 힌트</strong>
                 <p>골드 액세서리가 편하면 웜, 실버가 편하면 쿨부터 살펴보세요. 선명한 색이 잘 받으면 봄·겨울, 차분한 색이 잘 받으면 여름·가을일 가능성이 커요.</p>
               </div>
             </fieldset>
@@ -347,7 +355,8 @@
 
             <div class="quiz-footer">
               <button class="primary-button full-button" id="quiz-next" type="button" disabled>다음</button>
-              <p>선택한 정보는 이 기기에만 저장됩니다.</p>
+              <p id="quiz-next-reason">닉네임을 입력하면 다음으로 갈 수 있어요.</p>
+              <p class="storage-note">선택한 정보는 이 기기에만 저장됩니다.</p>
             </div>
           </form>
         </div>
@@ -370,6 +379,8 @@
           <button id="view-analysis-note" type="button">분석 기준 보기</button>
         </div>
 
+        <section class="result-summary-grid" id="result-summary-grid" aria-label="스타일 핵심 요약"></section>
+
         <div class="result-hero">
           <div class="result-hero-copy">
             <p>Today’s direction</p>
@@ -383,14 +394,29 @@
         </div>
 
         <nav class="category-tabs" aria-label="스타일 추천 카테고리">
-          <button class="category-tab is-active" type="button" data-category="today">오늘</button>
-          <button class="category-tab" type="button" data-category="hair">헤어</button>
-          <button class="category-tab" type="button" data-category="beauty">뷰티</button>
-          <button class="category-tab" type="button" data-category="wear">옷</button>
-          <button class="category-tab" type="button" data-category="care">관리</button>
+          <button class="category-tab is-active" type="button" data-category="today" aria-pressed="true">오늘</button>
+          <button class="category-tab" type="button" data-category="hair" aria-pressed="false">헤어</button>
+          <button class="category-tab" type="button" data-category="beauty" aria-pressed="false">뷰티</button>
+          <button class="category-tab" type="button" data-category="wear" aria-pressed="false">옷</button>
+          <button class="category-tab" type="button" data-category="care" aria-pressed="false">관리</button>
         </nav>
 
         <div class="recommendation-content" id="recommendation-content" aria-live="polite"></div>
+
+        <section class="area-setting-card" id="area-setting-card" aria-labelledby="area-setting-title">
+          <div>
+            <span class="card-kicker">NEARBY ACTION</span>
+            <h2 id="area-setting-title">주변 숍을 볼 활동 지역</h2>
+            <p id="area-setting-copy">지역은 리포트 생성에는 필요 없고, 지도 링크를 열 때만 사용해요.</p>
+          </div>
+          <div class="area-setting-form">
+            <label class="text-field" for="result-area-input">
+              <span>활동 지역</span>
+              <input id="result-area-input" type="text" maxlength="24" placeholder="예: 서울 성수동" autocomplete="address-level2" />
+            </label>
+            <button class="secondary-button" id="save-area-button" type="button">지역 저장</button>
+          </div>
+        </section>
 
         <div class="result-footer">
           <p>추천은 선택한 프로필을 바탕으로 만든 스타일 가이드예요.</p>

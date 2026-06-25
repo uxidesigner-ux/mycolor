@@ -31,6 +31,7 @@ jobs:
         run: npm run verify
         env:
           MOI_ANALYSIS_ENDPOINT: ${{ vars.MOI_ANALYSIS_ENDPOINT }}
+          MOI_PHOTO_ANALYSIS_ENABLED: ${{ vars.MOI_PHOTO_ANALYSIS_ENABLED }}
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

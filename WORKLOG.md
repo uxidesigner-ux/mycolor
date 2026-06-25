@@ -196,3 +196,97 @@
 - 커밋/푸시:
   - 대상: `main`
   - 예정 커밋 메시지: `chore: log production deployment result`
+
+## 2026-06-25 KST — v0.1.2 Impeccable `/audit`
+
+- 요청: `/audit`.
+- 버전:
+  - `0.1.2`
+- 범위:
+  - 현재 `main` 소스와 production URL `https://uxidesigner-ux.github.io/mycolor/`.
+  - Impeccable `audit` 기준의 Accessibility, Performance, Theming, Responsive Design, Anti-patterns 점검.
+- 조치:
+  - Impeccable `audit` 및 `product` reference 확인.
+  - `PRODUCT.md`, `DESIGN.md`, `index.html`, `styles.css`, `app.js`, `worker/src/index.js` 점검.
+  - production URL, 정적 asset, Worker endpoint HTTP 응답 확인.
+  - 로컬 검증과 production 브라우저 확인 실행.
+  - 모바일 390×844에서 landing 접근성/대비/touch target 측정.
+  - 320×720, 390×844, 768×1024, 1280×800 responsive metrics 측정.
+  - 직접 선택 → 퀴즈 → 결과 경로를 production 브라우저에서 확인.
+- 검증/증거:
+  - `npm run verify` 통과.
+  - `node .agents/skills/impeccable/scripts/detect.mjs --json index.html styles.css app.js worker/src/index.js` 실행.
+  - production static asset HTTP `200` 확인:
+    - `/`, `styles.css`, `app.js`, `config.js`, `icon.svg`.
+  - Worker `OPTIONS /analyze` → HTTP `204`.
+  - Worker `POST /analyze` → HTTP `503`, message: `분석 서버 설정이 완료되지 않았어요.`
+  - 390×844 모바일 landing:
+    - `scrollWidth=390`.
+    - 직접 선택 경로 정상.
+    - console error/warning 없음.
+    - 작은 touch target 후보: `MOI 홈` 79×30, `내 스타일` 72×40, `직접 선택할게요` 81×34.
+  - 1280×800 desktop:
+    - decorative orbit overflow로 `scrollWidth=1306`.
+  - GitHub Actions:
+    - Pages deploy 최신 run 성공.
+    - Worker deploy run 실패 유지, 원인 `OPENAI_API_KEY` secret 미설정.
+- 주요 감사 결과:
+  - Audit Health Score: `13/20` 수준으로 산정.
+  - P0: production 사진 분석 API가 `OPENAI_API_KEY` secret 미설정으로 동작하지 않음.
+  - P1: Worker가 유료 OpenAI endpoint 앞단에서 rate limit / abuse protection 없이 설계되어 있음.
+  - P2: 작은 touch target, category tab active state의 ARIA 부재, desktop decorative overflow, 디자인 토큰 drift, feTurbulence noise anti-pattern.
+- 남은 일:
+  - 사용자가 지시하면 P0/P1부터 `$impeccable harden`, `$impeccable adapt`, `$impeccable polish` 순서로 개선.
+
+## 2026-06-25 KST — v0.1.3 도구형 UX 및 결과 요약 개선
+
+- 요청: 홈, 직접 선택 플로우, 사진 분석 준비 중 처리, 결과 화면의 멘탈모델/사용성 개선.
+- 버전:
+  - `0.1.2` → `0.1.3`
+- 작업 중 느려진 원인:
+  - 모바일 390px 브라우저 검증에서 스플래시 최소 2초 대기 시간이 반복됨.
+  - Codex 내장 브라우저 세션이 중간 중단으로 끊겨 재연결이 필요했음.
+  - 이번 범위가 홈 CTA, 직접 선택, 사진 분석 상태, 결과 요약, 지역 입력, 지도/공유 링크까지 이어지는 플로우 검증이어서 단순 정적 수정보다 확인 단계가 많았음.
+- 조치:
+  - 홈 H1/서브카피를 기능 중심으로 재작성하고, 기본 CTA를 `사진 없이 직접 선택`으로 조정.
+  - 사진 분석 endpoint/enable flag가 준비되지 않은 production 상태에서는 사진 CTA를 `사진 분석 준비 중` 베타 상태로 표시하고, 클릭 시 에러 화면 대신 안내 토스트를 표시.
+  - `MOI_PHOTO_ANALYSIS_ENABLED` 배포 변수를 추가해 사진 분석 활성화 여부를 endpoint와 별도로 제어.
+  - 직접 선택 1단계에서 활동 지역 입력을 제거하고 닉네임만 필수로 변경.
+  - 얼굴형/퍼스널컬러에 `잘 모르겠어요` 선택지를 추가하고, 결과에서는 범용 얼굴형 추천/뉴트럴 팔레트로 자연스럽게 처리.
+  - 퍼스널컬러 도움말을 기본 노출 아코디언 형태로 강화.
+  - 결과 상단에 `내 기준`, `오늘 바로 하기`, `피하면 좋은 것` 3개 요약 카드를 추가.
+  - 결과 태그의 라벨/대비를 강화하고, 탭 `aria-pressed` 상태를 갱신하도록 개선.
+  - 주변 숍 지도 링크는 지역이 없으면 결과 화면의 `활동 지역 설정` 카드로 포커스 이동 후 입력받도록 변경.
+  - 지역 입력 후 네이버 지도 검색 링크가 지역 기준으로 열리도록 검증.
+  - Web Share 실패 시 클립보드 복사를 우선 시도하도록 공유 fallback을 보강.
+- 파일:
+  - `.github/workflows/pages.yml`
+  - `WORKLOG.md`
+  - `app.js`
+  - `config.js`
+  - `index.html`
+  - `package.json`
+  - `scripts/build.mjs`
+  - `styles.css`
+- 검증:
+  - `npm run check` 통과, `Version verified: 0.1.3` 확인.
+  - `npm run build` 통과, production config에서 `Photo analysis enabled: no` 확인.
+  - `npm run verify` 통과.
+  - `git diff --check` 통과.
+  - 모바일 390×844 로컬 preview:
+    - 홈 CTA가 첫 화면 안에 표시됨.
+    - 사진 CTA 클릭 시 분석/에러 화면으로 빠지지 않고 안내 토스트 표시.
+    - 직접 선택 → 닉네임 → 얼굴형 모름 → 퍼스널컬러 모름 → 무드 선택 → 결과 도달.
+    - 결과 첫 진입에서 요약 카드 3개 표시.
+    - 지역 없이 결과 생성 가능.
+    - 지도 버튼 클릭 시 지역 입력 카드로 포커스 이동 및 안내 토스트 표시.
+    - 지역 저장 후 네이버 지도 검색 URL 열림.
+    - 저장된 결과 `#result` 재진입 시 유지.
+    - 탭 전환 시 `aria-pressed`와 콘텐츠 갱신 확인.
+    - 네이버 쇼핑 링크 href 유지 확인.
+  - Impeccable detector 실행:
+    - 빌드/기능 차단 이슈는 없음.
+    - 기존 CSS literal 색상/반경 및 이번 선택 상태 색상에 대한 design-system advisory 다수 확인.
+- 남은 일:
+  - 사진 분석을 실제 production에서 켜려면 GitHub Actions 변수 `MOI_PHOTO_ANALYSIS_ENABLED=true`와 Worker `OPENAI_API_KEY` secret 설정이 필요.
+  - 디자인 토큰 정합성을 더 엄격하게 맞추려면 `DESIGN.md` 팔레트/반경 스케일 업데이트 또는 CSS tokenization 후속 작업 권장.

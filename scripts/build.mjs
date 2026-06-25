@@ -14,8 +14,10 @@ for (const file of files) {
 }
 
 const analysisEndpoint = process.env.MOI_ANALYSIS_ENDPOINT?.trim();
+const photoAnalysisEnabled = process.env.MOI_PHOTO_ANALYSIS_ENABLED === "true";
 const productionConfig = `window.MOI_CONFIG = ${JSON.stringify({
   analysisEndpoint: analysisEndpoint ?? "",
+  photoAnalysisEnabled,
   demoMode: false,
   appVersion: packageInfo.version
 }, null, 2)};\n`;
@@ -25,5 +27,6 @@ if (analysisEndpoint) {
   console.log(`Configured photo analysis endpoint: ${analysisEndpoint}`);
 }
 
+console.log(`Photo analysis enabled: ${photoAnalysisEnabled ? "yes" : "no"}`);
 console.log(`Configured app version: ${packageInfo.version}`);
 console.log(`Built ${files.length} files into ${output}`);
