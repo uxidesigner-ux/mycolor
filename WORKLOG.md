@@ -537,3 +537,25 @@
   - `git diff --check` 통과.
 - 남은 일:
   - OpenAI Platform Billing에서 API credits/결제 한도 설정 후 실제 얼굴 사진으로 `/analyze` 재검증 필요.
+
+## 2026-06-25 KST — v0.1.7 배포 및 실제 Worker 상태 확인
+
+- 요청 흐름: Cloudflare secret 등록 후 사진 분석 가능 상태까지 점검.
+- 버전:
+  - `0.1.7`
+- 커밋/푸시:
+  - `cdc37b7 fix: align photo analysis schema`
+  - `4da3e8a chore: log photo analysis api errors`
+  - `32bb567 fix: handle photo analysis quota errors`
+- 배포 결과:
+  - Worker workflow `28172545152` 성공.
+  - Worker workflow `28172689853` 성공.
+  - Worker workflow `28172950237` 성공.
+  - Pages workflow `28172950123` 성공.
+- 실제 확인:
+  - 공개 config: `appVersion: "0.1.7"`, `photoAnalysisEnabled: true`, endpoint 설정 확인.
+  - Worker `/analyze`는 더 이상 `OPENAI_API_KEY` 미설정 503을 반환하지 않음.
+  - 유효한 JPG 요청에서 OpenAI `insufficient_quota`를 확인했고, Worker가 503과 “OpenAI 사용량 설정 필요” 메시지를 반환함.
+- 남은 일:
+  - OpenAI Platform에서 API billing/credit/quota를 활성화해야 실제 AI 분석 완료 응답을 받을 수 있음.
+  - 장기 운영 전 Cloudflare GitHub secret의 임시 OAuth token을 전용 `Edit Cloudflare Workers` API token으로 교체 권장.
