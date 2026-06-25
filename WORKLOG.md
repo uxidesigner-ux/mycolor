@@ -136,3 +136,31 @@
 - 커밋/푸시:
   - 대상 브랜치: `codex/photo-style-analysis`
   - 예정 커밋 메시지: `feat: clarify mobile landing experience`
+
+## 2026-06-25 KST — v0.1.2 PR 배포 진행 준비
+
+- 요청: 커밋/푸시 후 이어서 진행.
+- 버전:
+  - `0.1.2`
+- 현재 상태 확인:
+  - 로컬 작업트리: clean.
+  - 현재 브랜치: `codex/photo-style-analysis`.
+  - 원격 추적 브랜치: `origin/codex/photo-style-analysis`.
+  - PR: `#2 [codex] add photo style analysis flow`.
+  - PR 상태: `OPEN`, `Draft`, merge state `CLEAN`.
+  - PR 체크: `Product checks / verify` 성공.
+- 배포 흐름 확인:
+  - `.github/workflows/pages.yml`은 `main` push 시 `npm run verify` 후 `dist`를 GitHub Pages artifact로 배포.
+  - `.github/workflows/worker.yml`은 `main` push 시 Worker 관련 파일 변경이 있을 때 Cloudflare Worker 배포.
+- 진행 계획:
+  - 이번 로그를 커밋/푸시.
+  - PR을 Ready 상태로 전환.
+  - merge 가능하면 `main`으로 merge.
+  - GitHub Pages 배포 실행/결과와 확인 가능한 URL을 최종 보고.
+- 검증:
+  - `git status -sb`
+  - `gh pr view 2 --repo uxidesigner-ux/mycolor --json ...`
+  - `.github/workflows/*.yml` 배포 조건 확인.
+- 커밋/푸시:
+  - 대상 브랜치: `codex/photo-style-analysis`
+  - 예정 커밋 메시지: `chore: log deployment continuation`
