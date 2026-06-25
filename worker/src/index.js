@@ -113,6 +113,22 @@ function readOutputText(response) {
   return "";
 }
 
+async function readOpenAIError(response) {
+  const text = await response.text().catch(() => "");
+  try {
+    const parsed = JSON.parse(text);
+    const error = parsed.error || {};
+    return {
+      type: typeof error.type === "string" ? error.type : "",
+      param: typeof error.param === "string" ? error.param : "",
+      code: typeof error.code === "string" ? error.code : "",
+      message: typeof error.message === "string" ? error.message.slice(0, 240) : ""
+    };
+  } catch {
+    return { type: "", param: "", code: "", message: text.slice(0, 240) };
+  }
+}
+
 function isValidImageDataUrl(value) {
   return typeof value === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value);
 }
@@ -255,7 +271,8 @@ export default {
 
     if (!openAIResponse.ok) {
       const requestId = openAIResponse.headers.get("x-request-id");
-      console.error("OpenAI analysis failed", openAIResponse.status, requestId || "no-request-id");
+      const openAIError = await readOpenAIError(openAIResponse);
+      console.error("OpenAI analysis failed", openAIResponse.status, requestId || "no-request-id", openAIError);
       const retryAfter = openAIResponse.headers.get("retry-after");
       const status = openAIResponse.status === 429 ? 429 : 502;
       return json(
