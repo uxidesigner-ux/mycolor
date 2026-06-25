@@ -2,13 +2,14 @@ import worker from "../worker/src/index.js";
 
 const originalFetch = globalThis.fetch;
 let capturedRequest;
+const limiterKeys = [];
 
 globalThis.fetch = async (url, options) => {
   capturedRequest = { url, body: JSON.parse(options.body) };
   const analysis = {
     imageUsable: true,
     quality: { score: 88, lighting: "good", faceVisibility: "clear", notes: "자연광에서 얼굴이 선명하게 보여요." },
-    faceShape: "oval",
+    faceShape: "uncertain",
     faceConfidence: 82,
     faceEvidence: ["이마와 턱의 폭이 균형을 이뤄요."],
     personalColor: "summer",
@@ -36,17 +37,39 @@ try {
   const request = new Request("https://moi-style-analysis.example/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Origin": "https://uxidesigner-ux.github.io" },
-    body: JSON.stringify({ image: "data:image/jpeg;base64,AAAA" })
+    body: JSON.stringify({ image: "data:image/jpeg;base64,AAAA", clientId: "client_test_12345" })
   });
-  const response = await worker.fetch(request, { OPENAI_API_KEY: "test-key", OPENAI_MODEL: "gpt-5.5" });
+  const response = await worker.fetch(request, {
+    OPENAI_API_KEY: "test-key",
+    OPENAI_MODEL: "gpt-5.4-mini",
+    ANALYSIS_RATE_LIMITER: {
+      async limit({ key }) {
+        limiterKeys.push(key);
+        return { success: true };
+      }
+    }
+  });
   const result = await response.json();
 
   if (response.status !== 200) throw new Error(`Unexpected worker status: ${response.status}`);
-  if (result.faceShape !== "oval" || result.personalColor !== "summer") throw new Error("Worker did not return structured analysis.");
+  if (result.faceShape !== "unknown" || result.personalColor !== "summer") throw new Error("Worker did not normalize structured analysis.");
   if (capturedRequest?.url !== "https://api.openai.com/v1/responses") throw new Error("Worker did not call the Responses API.");
+  if (capturedRequest.body.model !== "gpt-5.4-mini") throw new Error("Worker did not use the configured model.");
   if (capturedRequest.body.store !== false) throw new Error("Worker must disable response storage.");
   if (capturedRequest.body.text?.format?.type !== "json_schema") throw new Error("Worker must request Structured Outputs.");
   if (capturedRequest.body.input?.[0]?.content?.[1]?.type !== "input_image") throw new Error("Worker must send an image input.");
+  if (!limiterKeys.includes("client:client_test_12345")) throw new Error("Worker must rate limit by stable client id when available.");
+
+  const limitedRequest = new Request("https://moi-style-analysis.example/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Origin": "https://uxidesigner-ux.github.io" },
+    body: JSON.stringify({ image: "data:image/jpeg;base64,AAAA", clientId: "client_test_12345" })
+  });
+  const limitedResponse = await worker.fetch(limitedRequest, {
+    OPENAI_API_KEY: "test-key",
+    ANALYSIS_RATE_LIMITER: { async limit() { return { success: false }; } }
+  });
+  if (limitedResponse.status !== 429) throw new Error("Worker must reject rate-limited analysis requests.");
 
   console.log("Worker analysis contract verified.");
 } finally {

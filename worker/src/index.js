@@ -4,6 +4,17 @@ const DEFAULT_ORIGINS = [
   "http://127.0.0.1:4173"
 ];
 
+const DEFAULT_MODEL = "gpt-5.4-mini";
+const MAX_IMAGE_DATA_URL_LENGTH = 4_500_000;
+const FALLBACK_RATE_LIMIT_KEY = "anonymous-photo-analysis";
+const UNKNOWN_VALUES = new Set(["unknown", "uncertain"]);
+const VALID_FACE_SHAPES = new Set(["oval", "round", "square", "long", "heart", "unknown"]);
+const VALID_PERSONAL_COLORS = new Set(["spring", "summer", "autumn", "winter", "unknown"]);
+const SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "no-referrer"
+};
+
 const STYLE_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -20,10 +31,10 @@ const STYLE_SCHEMA = {
       },
       required: ["score", "lighting", "faceVisibility", "notes"]
     },
-    faceShape: { type: "string", enum: ["oval", "round", "square", "long", "heart", "uncertain"] },
+    faceShape: { type: "string", enum: ["oval", "round", "square", "long", "heart", "unknown"] },
     faceConfidence: { type: "integer", minimum: 0, maximum: 100 },
     faceEvidence: { type: "array", items: { type: "string" }, maxItems: 3 },
-    personalColor: { type: "string", enum: ["spring", "summer", "autumn", "winter", "uncertain"] },
+    personalColor: { type: "string", enum: ["spring", "summer", "autumn", "winter", "unknown"] },
     colorConfidence: { type: "integer", minimum: 0, maximum: 100 },
     colorEvidence: { type: "array", items: { type: "string" }, maxItems: 3 },
     undertone: { type: "string", enum: ["warm", "cool", "neutral", "uncertain"] },
@@ -53,9 +64,10 @@ Important boundaries:
 - Do not score beauty or make negative judgments about appearance.
 - Face shape is a tentative geometric styling category, not a biological fact.
 - Personal color from one photo is only an estimate because lighting, makeup, camera white balance, and filters distort color.
-- If the face is obscured, too small, strongly filtered, overexposed, underexposed, or lit with strong colored light, set imageUsable to false or use uncertain with low confidence.
+- If the face is obscured, too small, strongly filtered, overexposed, underexposed, or lit with strong colored light, set imageUsable to false or use unknown with low confidence.
 - Use oval, round, square, long, or heart only when visible evidence supports it.
 - Use spring, summer, autumn, or winter only as a tentative styling palette suggestion.
+- Use unknown when there is not enough evidence for face shape or personal color.
 - Write evidence and summary in concise, warm Korean. Describe neutral visual observations, not judgments.
 - Mention lighting uncertainty in the color evidence when relevant.
 `;
@@ -84,6 +96,7 @@ function json(body, status = 200, headers = {}) {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
+      ...SECURITY_HEADERS,
       ...headers
     }
   });
@@ -102,6 +115,47 @@ function readOutputText(response) {
 
 function isValidImageDataUrl(value) {
   return typeof value === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value);
+}
+
+function isValidClientId(value) {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{12,64}$/.test(value);
+}
+
+function rateLimitKey(request, body) {
+  if (isValidClientId(body.clientId)) return `client:${body.clientId}`;
+  const fallback = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || FALLBACK_RATE_LIMIT_KEY;
+  return `fallback:${fallback.slice(0, 96)}`;
+}
+
+async function enforceRateLimit(request, env, body, origin) {
+  if (!env.ANALYSIS_RATE_LIMITER?.limit) return null;
+
+  try {
+    const { success } = await env.ANALYSIS_RATE_LIMITER.limit({ key: rateLimitKey(request, body) });
+    if (success) return null;
+    return json(
+      { message: "사진 분석 요청이 잠시 많아요. 1분 뒤 다시 시도해 주세요." },
+      429,
+      { ...corsHeaders(origin), "Retry-After": "60" }
+    );
+  } catch (error) {
+    console.error("Rate limit check failed", error instanceof Error ? error.message : "unknown-error");
+    return null;
+  }
+}
+
+function normalizeChoice(value, validValues) {
+  if (validValues.has(value)) return value;
+  if (UNKNOWN_VALUES.has(value)) return "unknown";
+  return "unknown";
+}
+
+function normalizeAnalysis(analysis) {
+  return {
+    ...analysis,
+    faceShape: normalizeChoice(analysis?.faceShape, VALID_FACE_SHAPES),
+    personalColor: normalizeChoice(analysis?.personalColor, VALID_PERSONAL_COLORS)
+  };
 }
 
 export default {
@@ -132,11 +186,14 @@ export default {
     if (!isValidImageDataUrl(body.image)) {
       return json({ message: "지원하지 않는 사진 형식이에요." }, 400, corsHeaders(origin));
     }
-    if (body.image.length > 4_500_000) {
+    if (body.image.length > MAX_IMAGE_DATA_URL_LENGTH) {
       return json({ message: "사진이 너무 커요. 더 작은 사진으로 다시 시도해 주세요." }, 413, corsHeaders(origin));
     }
 
-    const model = env.OPENAI_MODEL || "gpt-5.5";
+    const rateLimitResponse = await enforceRateLimit(request, env, body, origin);
+    if (rateLimitResponse) return rateLimitResponse;
+
+    const model = env.OPENAI_MODEL || DEFAULT_MODEL;
     let openAIResponse;
     try {
       openAIResponse = await fetch("https://api.openai.com/v1/responses", {
@@ -174,7 +231,13 @@ export default {
     if (!openAIResponse.ok) {
       const requestId = openAIResponse.headers.get("x-request-id");
       console.error("OpenAI analysis failed", openAIResponse.status, requestId || "no-request-id");
-      return json({ message: "사진 분석이 잠시 원활하지 않아요. 잠시 후 다시 시도해 주세요." }, 502, corsHeaders(origin));
+      const retryAfter = openAIResponse.headers.get("retry-after");
+      const status = openAIResponse.status === 429 ? 429 : 502;
+      return json(
+        { message: status === 429 ? "분석 요청이 잠시 많아요. 잠시 후 다시 시도해 주세요." : "사진 분석이 잠시 원활하지 않아요. 잠시 후 다시 시도해 주세요." },
+        status,
+        retryAfter ? { ...corsHeaders(origin), "Retry-After": retryAfter } : corsHeaders(origin)
+      );
     }
 
     const openAIData = await openAIResponse.json();
@@ -188,7 +251,7 @@ export default {
     }
 
     return json({
-      ...analysis,
+      ...normalizeAnalysis(analysis),
       meta: { model, analyzedAt: new Date().toISOString() }
     }, 200, corsHeaders(origin));
   }

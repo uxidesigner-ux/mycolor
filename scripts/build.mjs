@@ -14,7 +14,7 @@ for (const file of files) {
 }
 
 const analysisEndpoint = process.env.MOI_ANALYSIS_ENDPOINT?.trim();
-const photoAnalysisEnabled = process.env.MOI_PHOTO_ANALYSIS_ENABLED === "true";
+const photoAnalysisEnabled = Boolean(analysisEndpoint) && process.env.MOI_PHOTO_ANALYSIS_ENABLED !== "false";
 const productionConfig = `window.MOI_CONFIG = ${JSON.stringify({
   analysisEndpoint: analysisEndpoint ?? "",
   photoAnalysisEnabled,

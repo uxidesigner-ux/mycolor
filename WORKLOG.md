@@ -357,3 +357,69 @@
 - 커밋/푸시:
   - 대상 브랜치: `main`
   - 예정 커밋 메시지: `style: refresh monochrome product UI`
+
+## 2026-06-25 KST — v0.1.5 사진 분석 실사용 연결
+
+- 요청: 사진을 등록하면 AI가 분석해서 기존 결과처럼 맞춤형 제안을 만들 수 있게 기능 구현.
+- 버전:
+  - `0.1.4` → `0.1.5`
+- 조치:
+  - Worker 기본 모델을 `gpt-5.4-mini`로 조정하고 OpenAI Responses API 이미지 입력 + Structured Outputs 계약을 유지.
+  - Worker schema의 얼굴형/퍼스널컬러 불확실 값을 앱과 같은 `unknown`으로 맞추고, 기존 `uncertain` 응답도 `unknown`으로 fallback되게 정규화.
+  - Worker에 Cloudflare Rate Limiting binding `ANALYSIS_RATE_LIMITER`를 추가해 익명 client id 기준 1분 20회 제한을 적용.
+  - 앱에서 사진 분석 요청 시 localStorage 기반 익명 client id를 함께 보내도록 변경.
+  - 사진 분석 결과가 불확실하거나 누락돼도 리뷰 화면에서 `잘 모르겠어요/뉴트럴` 선택으로 막히지 않게 처리.
+  - 기본 `config.js`는 사진 분석 OFF로 안전화하고, 로컬 `npm run dev:photo`에서만 mock 분석을 켜도록 dev server가 `/config.js`를 동적 제공.
+  - production build는 `MOI_ANALYSIS_ENDPOINT`가 있으면 사진 분석 CTA를 자동 활성화하고, `MOI_PHOTO_ANALYSIS_ENABLED=false`로만 명시 비활성화 가능하게 변경.
+  - README의 사진 분석/배포/현재 기능 설명을 실제 구현 상태에 맞게 갱신.
+  - 디자인 문서와 CSS 주석 버전을 v0.1.5로 갱신.
+- 파일:
+  - `DESIGN.md`
+  - `README.md`
+  - `WORKLOG.md`
+  - `app.js`
+  - `config.js`
+  - `index.html`
+  - `package.json`
+  - `scripts/build.mjs`
+  - `scripts/serve.mjs`
+  - `scripts/test-worker.mjs`
+  - `styles.css`
+  - `worker/src/index.js`
+  - `worker/wrangler.jsonc`
+- 검증:
+  - `npm run check` 통과, `Version verified: 0.1.5` 확인.
+  - `npm run test:worker` 통과.
+  - `npm run build` 통과.
+  - `npm run verify` 통과.
+  - `MOI_ANALYSIS_ENDPOINT='https://example.workers.dev/analyze' npm run build`에서 endpoint 주입 및 `photoAnalysisEnabled: true` 확인.
+  - `npm run dev:photo`에서 동적 `/config.js`가 `/api/analyze`, `photoAnalysisEnabled: true`, `demoMode: true`, `appVersion: 0.1.5` 반환 확인.
+  - `npm run dev:photo` mock `/api/analyze` POST 응답 확인.
+  - `npx wrangler@4 deploy --config worker/wrangler.jsonc --dry-run` 통과, `ANALYSIS_RATE_LIMITER (20 requests/60s)` binding 인식 확인.
+  - `git diff --check` 통과.
+  - 원격 저장소 변수 확인: `MOI_ANALYSIS_ENDPOINT=https://moi-style-analysis.uxidesigner-mycolor.workers.dev/analyze` 등록됨.
+  - 실제 Worker `OPTIONS /analyze`는 204 및 CORS 정상.
+  - 실제 Worker `POST /analyze`는 503 `분석 서버 설정이 완료되지 않았어요.` 반환.
+- 남은 일:
+  - 현재 로컬/저장소 secret 조회 결과 `OPENAI_API_KEY`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`가 없어 실제 OpenAI 분석 호출은 아직 켤 수 없음.
+  - GitHub Actions secrets 또는 Cloudflare Worker secret에 `OPENAI_API_KEY`를 등록한 뒤 Worker를 재배포하면 실제 사진 분석이 동작할 준비가 됨.
+  - 커밋/푸시 결과는 아래 `v0.1.5 사진 분석 기능 커밋/푸시` 로그에서 이어서 기록.
+
+## 2026-06-25 KST — v0.1.5 사진 분석 기능 커밋/푸시
+
+- 요청: v0.1.5 사진 분석 기능 변경사항을 커밋하고 원격 저장소에 푸시.
+- 버전:
+  - `0.1.5`
+- 커밋 범위:
+  - OpenAI Responses API 기반 사진 분석 Worker 보강.
+  - Cloudflare Rate Limiting binding 추가.
+  - 앱 사진 분석 요청/결과 fallback 연결.
+  - production endpoint 주입 시 사진 분석 자동 활성화.
+  - 로컬 `dev:photo` mock 분석 설정 정리.
+  - README, 디자인 문서, 작업 로그 갱신.
+- 검증:
+  - `npm run verify` 통과.
+  - `git diff --check` 통과.
+- 커밋/푸시:
+  - 대상 브랜치: `main`
+  - 예정 커밋 메시지: `feat: enable photo style analysis`

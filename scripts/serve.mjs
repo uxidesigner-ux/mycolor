@@ -1,4 +1,4 @@
-import { createReadStream, existsSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, join, resolve } from "node:path";
 
@@ -7,6 +7,8 @@ const mockAnalysis = args.includes("--mock-analysis");
 const requestedRoot = args.find((argument) => !argument.startsWith("--")) ?? ".";
 const root = resolve(process.cwd(), requestedRoot);
 const port = Number(process.env.PORT ?? 4173);
+const packageInfo = JSON.parse(readFileSync(resolve(process.cwd(), "package.json"), "utf8"));
+const servesSourceRoot = requestedRoot === ".";
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -19,6 +21,22 @@ const contentTypes = {
 
 createServer((request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+
+  if (servesSourceRoot && request.method === "GET" && pathname === "/config.js") {
+    const endpoint = mockAnalysis ? "/api/analyze" : (process.env.MOI_ANALYSIS_ENDPOINT?.trim() || "");
+    const enabled = mockAnalysis || (Boolean(endpoint) && process.env.MOI_PHOTO_ANALYSIS_ENABLED !== "false");
+    response.writeHead(200, {
+      "Content-Type": "text/javascript; charset=utf-8",
+      "Cache-Control": "no-store"
+    });
+    response.end(`window.MOI_CONFIG = ${JSON.stringify({
+      analysisEndpoint: endpoint,
+      photoAnalysisEnabled: enabled,
+      demoMode: mockAnalysis,
+      appVersion: packageInfo.version
+    }, null, 2)};\n`);
+    return;
+  }
 
   if (mockAnalysis && request.method === "POST" && pathname === "/api/analyze") {
     let received = 0;

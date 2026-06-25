@@ -1,5 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.4";
+const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.5";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -246,6 +247,33 @@ function scheduleSplashDismiss() {
 
 function normalizeText(value, maxLength = 48) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+function normalizeAnalysisChoice(value, choices) {
+  const candidate = normalizeText(value, 24);
+  if (choices[candidate]) return candidate;
+  return "unknown";
+}
+
+function createFallbackClientId() {
+  const bytes = new Uint8Array(12);
+  if (globalThis.crypto?.getRandomValues) {
+    globalThis.crypto.getRandomValues(bytes);
+    return `client_${[...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("")}`;
+  }
+  return `client_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 14)}`;
+}
+
+function getAnalysisClientId() {
+  try {
+    const existing = localStorage.getItem(ANALYSIS_CLIENT_KEY);
+    if (/^[A-Za-z0-9_-]{12,64}$/.test(existing || "")) return existing;
+    const next = globalThis.crypto?.randomUUID?.().replace(/-/g, "_") || createFallbackClientId();
+    localStorage.setItem(ANALYSIS_CLIENT_KEY, next);
+    return next;
+  } catch {
+    return createFallbackClientId();
+  }
 }
 
 function normalizeProfile(profile) {
@@ -507,7 +535,7 @@ async function requestPhotoAnalysis() {
       fetch(analysisEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: selectedPhoto.dataUrl }),
+        body: JSON.stringify({ image: selectedPhoto.dataUrl, clientId: getAnalysisClientId() }),
         signal: controller.signal
       }),
       delay(2200)
@@ -519,9 +547,11 @@ async function requestPhotoAnalysis() {
       return;
     }
 
-    analysisResult = payload;
-    state.faceShape = faceShapes[payload.faceShape] ? payload.faceShape : "";
-    state.personalColor = personalColors[payload.personalColor] ? payload.personalColor : "";
+    const normalizedFaceShape = normalizeAnalysisChoice(payload.faceShape, faceShapes);
+    const normalizedPersonalColor = normalizeAnalysisChoice(payload.personalColor, personalColors);
+    analysisResult = { ...payload, faceShape: normalizedFaceShape, personalColor: normalizedPersonalColor };
+    state.faceShape = normalizedFaceShape;
+    state.personalColor = normalizedPersonalColor;
     state.mood = "";
     state.analysisSource = "photo";
     state.analysisConfidence = Math.round((Number(payload.faceConfidence || 0) + Number(payload.colorConfidence || 0)) / 2);
