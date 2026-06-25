@@ -58,7 +58,7 @@ components:
     rounded: "{rounded.md}"
 ---
 
-# Design System: MOI v0.1.8
+# Design System: MOI v0.1.9
 
 ## 1. Overview
 
@@ -146,6 +146,14 @@ MOI의 제품 UI는 화이트/그레이/블랙 중심이다.
 - 토스트는 “저장했어요”, “복사했어요” 같은 짧은 상태 피드백에만 사용한다.
 - 긴 설명이나 판단 근거는 토스트가 아니라 카드 내부 안내문으로 제공한다.
 - 모바일 토스트는 화면 중앙을 가리지 않고 하단 safe-area 위에 짧게 표시한다.
+
+### Bottom Sheets / iOS-like Motion
+
+- 안내, 확인, 공유, 지역 입력처럼 현재 화면 맥락에서 끝나는 작업은 새 화면보다 바텀시트를 우선한다.
+- 바텀시트는 grabber, 명확한 닫기 버튼, backdrop 닫기, Esc 닫기를 모두 지원한다.
+- iPhone에서는 medium/large detent처럼 콘텐츠 길이에 따라 높이가 달라지고 내부만 스크롤된다.
+- 전환은 iOS식 spring 감각을 참고하되, 과한 bounce보다 “살짝 붙는” 물리감만 사용한다.
+- `prefers-reduced-motion`에서는 sheet/화면 scale/슬라이드 모션을 거의 즉시 처리한다.
 
 ## 5. Do / Don’t
 

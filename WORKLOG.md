@@ -614,3 +614,46 @@
     - 지역 입력 font-size: 16px, height: 52px.
 - 참고:
   - Impeccable detector는 기존 CSS literal color/radius drift 81건을 advisory로 계속 보고함. 대부분 과거 스타일 잔재 및 추천 컬러 팔레트 관련 값이며, 별도 디자인 토큰 정리 작업으로 분리하는 것이 좋음.
+
+## 2026-06-26 KST — v0.1.9 바텀시트 중심 iOS-like 인터랙션 구현
+
+- 요청 흐름: `v0.1.8` 커밋/푸시 후, 바텀시트를 최대한 활용하고 iOS 전환/탄성 애니메이션을 참고해 인터랙션 개선.
+- 버전:
+  - `0.1.8` → `0.1.9`
+- 선행 작업:
+  - `v0.1.8` 변경분 커밋/푸시 완료.
+  - 커밋: `7748873 fix: polish mobile interaction details`
+- 참고한 원칙:
+  - Apple HIG Sheets: 현재 맥락과 가까운 scoped task는 sheet가 적합함.
+  - Apple UIKit sheet detent 개념: medium/large 높이와 grabber, drag-dismiss, progressive disclosure를 참고.
+  - Apple motion/spring 가이드: 연속성과 물리감은 주되 과한 bounce는 피하고 부드러운 감속을 사용.
+- 조치:
+  - 공통 bottom sheet 컴포넌트 추가.
+  - sheet backdrop, grabber, 닫기 버튼, Esc 닫기, drag-down 닫기 지원.
+  - sheet open 시 배경 화면이 살짝 scale-down 되어 iOS식 depth를 느끼도록 처리.
+  - 사진 분석 준비 중 안내를 토스트에서 바텀시트로 변경.
+  - 퍼스널컬러 힌트를 inline toggle 대신 바텀시트로 제공.
+  - 결과의 “분석 기준 보기”를 바텀시트로 제공하고, 사진 분석 근거가 있으면 큰 sheet로 표시.
+  - 프로필 수정 액션을 바텀시트 선택지로 변경.
+  - 주변 숍 지도 링크 클릭 시 지역이 없으면 바텀시트에서 지역 입력 후 지도 열기로 연결.
+  - 결과 공유를 바텀시트로 변경하고, 네이티브 공유/링크 복사 액션을 제공.
+  - sheet 내부 입력 필드도 16px 이상으로 유지해 iOS 포커스 확대를 방지.
+  - `prefers-reduced-motion`에서 scale/slide 모션을 비활성화.
+- 파일:
+  - `DESIGN.md`
+  - `WORKLOG.md`
+  - `app.js`
+  - `config.js`
+  - `index.html`
+  - `package.json`
+  - `styles.css`
+- 검증:
+  - `npm run verify` 통과, `Version verified: 0.1.9` 확인.
+  - `git diff --check` 통과.
+  - Impeccable detector: bounce warning 0건 확인. 기존 literal color/radius drift 81건은 별도 토큰 정리 대상으로 유지.
+  - 로컬 preview 모바일 390px 확인:
+    - 사진 분석 준비 중 sheet open 정상.
+    - 결과 공유 sheet open 정상.
+    - 주변 숍 지역 입력 sheet open 정상.
+    - sheet 지역 입력 font-size 16px, height 54px 확인.
+    - sheet open 시 body scale 상태 확인.

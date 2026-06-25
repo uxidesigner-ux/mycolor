@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.8";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.9";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -194,6 +194,9 @@ let toastTimer;
 let selectedPhoto = null;
 let analysisResult = null;
 let loadingStepTimer = null;
+let sheetActionHandlers = new Map();
+let lastFocusedBeforeSheet = null;
+let sheetDrag = null;
 
 const splashScreen = document.querySelector("#splash-screen");
 const splashVersion = document.querySelector("#splash-version");
@@ -222,6 +225,16 @@ const resultSummaryGrid = document.querySelector("#result-summary-grid");
 const areaSettingCard = document.querySelector("#area-setting-card");
 const resultAreaInput = document.querySelector("#result-area-input");
 const saveAreaButton = document.querySelector("#save-area-button");
+const bottomSheet = document.querySelector("#bottom-sheet");
+const sheetPanel = document.querySelector("#bottom-sheet-panel");
+const sheetBackdrop = document.querySelector("#sheet-backdrop");
+const sheetGrabber = document.querySelector("#sheet-grabber");
+const sheetClose = document.querySelector("#sheet-close");
+const sheetKicker = document.querySelector("#sheet-kicker");
+const sheetTitle = document.querySelector("#sheet-title");
+const sheetDescription = document.querySelector("#sheet-description");
+const sheetBody = document.querySelector("#sheet-body");
+const sheetActions = document.querySelector("#sheet-actions");
 const validImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const analysisEndpoint = window.MOI_CONFIG?.analysisEndpoint?.trim() || "";
 const photoAnalysisAvailable = Boolean(analysisEndpoint) && window.MOI_CONFIG?.photoAnalysisEnabled === true;
@@ -249,10 +262,105 @@ function normalizeText(value, maxLength = 48) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
+function escapeHtml(value) {
+  return normalizeText(String(value ?? ""), 500)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function normalizeAnalysisChoice(value, choices) {
   const candidate = normalizeText(value, 24);
   if (choices[candidate]) return candidate;
   return "unknown";
+}
+
+function closeBottomSheet({ restoreFocus = true } = {}) {
+  if (!bottomSheet || bottomSheet.hidden) return;
+  bottomSheet.classList.remove("is-open");
+  document.body.classList.remove("is-sheet-open");
+  sheetPanel?.style.removeProperty("--sheet-drag-y");
+  window.setTimeout(() => {
+    if (!bottomSheet.classList.contains("is-open")) {
+      bottomSheet.hidden = true;
+      sheetActionHandlers = new Map();
+      if (restoreFocus) lastFocusedBeforeSheet?.focus?.();
+      lastFocusedBeforeSheet = null;
+    }
+  }, 260);
+}
+
+function renderSheetActions(actions = []) {
+  sheetActionHandlers = new Map();
+  sheetActions.innerHTML = actions.map((action, index) => {
+    const id = `sheet-action-${index}`;
+    sheetActionHandlers.set(id, action.handler);
+    const variant = action.variant || "secondary";
+    return `<button class="sheet-action ${variant}" type="button" data-sheet-action="${id}">${escapeHtml(action.label)}</button>`;
+  }).join("");
+}
+
+function openBottomSheet({
+  kicker = "MOI",
+  title,
+  description = "",
+  body = "",
+  actions = [],
+  detent = "medium",
+  onOpen
+}) {
+  if (!bottomSheet || !sheetPanel) return;
+  lastFocusedBeforeSheet = document.activeElement;
+  sheetKicker.textContent = kicker;
+  sheetTitle.textContent = title;
+  sheetDescription.textContent = description;
+  sheetDescription.hidden = !description;
+  sheetBody.innerHTML = body;
+  renderSheetActions(actions);
+  bottomSheet.hidden = false;
+  bottomSheet.classList.toggle("is-large", detent === "large");
+  bottomSheet.classList.toggle("is-medium", detent !== "large");
+  sheetPanel.style.removeProperty("--sheet-drag-y");
+  requestAnimationFrame(() => {
+    document.body.classList.add("is-sheet-open");
+    bottomSheet.classList.add("is-open");
+    sheetPanel.focus({ preventScroll: true });
+    onOpen?.();
+  });
+}
+
+function beginSheetDrag(event) {
+  if (!bottomSheet?.classList.contains("is-open")) return;
+  event.preventDefault();
+  sheetDrag = { startY: event.clientY, currentY: event.clientY };
+  try {
+    sheetPanel.setPointerCapture?.(event.pointerId);
+  } catch {
+    // Some browser surfaces only allow capture on the original pointer target.
+  }
+  sheetPanel.classList.add("is-dragging");
+}
+
+function moveSheetDrag(event) {
+  if (!sheetDrag) return;
+  sheetDrag.currentY = event.clientY;
+  const delta = Math.max(0, sheetDrag.currentY - sheetDrag.startY);
+  sheetPanel.style.setProperty("--sheet-drag-y", `${Math.min(delta, 180)}px`);
+}
+
+function endSheetDrag() {
+  if (!sheetDrag) return;
+  const delta = Math.max(0, sheetDrag.currentY - sheetDrag.startY);
+  sheetDrag = null;
+  sheetPanel.classList.remove("is-dragging");
+  if (delta > 82) {
+    closeBottomSheet();
+    return;
+  }
+  sheetPanel.style.setProperty("--sheet-drag-y", "0px");
+  window.setTimeout(() => sheetPanel.style.removeProperty("--sheet-drag-y"), 220);
 }
 
 function createFallbackClientId() {
@@ -357,7 +465,21 @@ function syncPhotoAvailability() {
 function showPhotoUnavailableNotice() {
   if (photoAvailabilityNote) photoAvailabilityNote.hidden = false;
   if (photoUnavailableCard) photoUnavailableCard.hidden = false;
-  showToast("사진 분석 준비 중이에요. 직접 선택으로 시작해 주세요.");
+  openBottomSheet({
+    kicker: "사진 분석 베타",
+    title: "사진 분석은 준비 중이에요.",
+    description: "지금은 사진 없이 직접 선택해도 같은 형식의 스타일 리포트를 만들 수 있습니다.",
+    body: `
+      <div class="sheet-info-list">
+        <p><strong>결과 형식은 같아요.</strong><span>얼굴형, 퍼스널컬러, 무드 기준으로 헤어·메이크업·옷 추천을 받을 수 있어요.</span></p>
+        <p><strong>나중에 사진 분석으로 이어갈 수 있어요.</strong><span>분석 서버가 준비되면 같은 화면에서 바로 사용할 수 있게 열어둘게요.</span></p>
+      </div>
+    `,
+    actions: [
+      { label: "사진 없이 직접 선택", variant: "primary", handler: () => { closeBottomSheet({ restoreFocus: false }); beginQuiz({ reset: true }); } },
+      { label: "조금 더 둘러보기", handler: () => closeBottomSheet() }
+    ]
+  });
 }
 
 function beginPhotoFlow() {
@@ -792,11 +914,49 @@ function focusAreaSetting() {
 
 function openMapSearch(query) {
   if (!areaLabel()) {
-    focusAreaSetting();
-    showToast("활동 지역을 먼저 입력해 주세요.");
+    openAreaSheet(query);
     return;
   }
   window.open(mapLink(query), "_blank", "noopener,noreferrer");
+}
+
+function openAreaSheet(query = "") {
+  const currentArea = areaLabel();
+  openBottomSheet({
+    kicker: "주변 숍",
+    title: "활동 지역을 알려주세요.",
+    description: "지도 링크를 열 때만 사용하고, 리포트 생성에는 필요하지 않아요.",
+    body: `
+      <label class="sheet-field" for="sheet-area-input">
+        <span>활동 지역</span>
+        <input id="sheet-area-input" type="text" maxlength="24" placeholder="예: 서울 성수동" autocomplete="address-level2" value="${escapeHtml(currentArea)}" />
+      </label>
+      <p class="sheet-subcopy">입력 후 바로 주변 숍 검색으로 이어갈게요.</p>
+    `,
+    actions: [
+      {
+        label: query ? "저장하고 지도 열기" : "지역 저장",
+        variant: "primary",
+        handler: () => {
+          const input = document.querySelector("#sheet-area-input");
+          state.area = normalizeText(input?.value, 24);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          renderAreaSetting();
+          renderCategory(currentCategory);
+          if (!state.area) {
+            showToast("활동 지역을 입력해 주세요.");
+            input?.focus();
+            return;
+          }
+          closeBottomSheet({ restoreFocus: false });
+          showToast("활동 지역을 저장했어요.");
+          if (query) window.open(mapLink(query), "_blank", "noopener,noreferrer");
+        }
+      },
+      { label: "나중에 할게요", handler: () => closeBottomSheet() }
+    ],
+    onOpen: () => window.setTimeout(() => document.querySelector("#sheet-area-input")?.focus({ preventScroll: true }), 180)
+  });
 }
 
 function updateCategoryTabs(category) {
@@ -987,6 +1147,148 @@ function showToast(message, { duration = 2400 } = {}) {
   toastTimer = setTimeout(() => toast.classList.remove("is-visible"), duration);
 }
 
+function profileSummaryItems() {
+  const face = faceShapes[state.faceShape] || faceShapes.unknown;
+  const color = personalColors[state.personalColor] || personalColors.unknown;
+  const mood = moods[state.mood] || moods.natural;
+  return [
+    ["얼굴형", face.label],
+    ["퍼스널컬러", color.label],
+    ["무드", mood.label]
+  ];
+}
+
+function openAnalysisNoteSheet() {
+  const items = profileSummaryItems().map(([label, value]) => `
+    <span class="sheet-chip"><small>${escapeHtml(label)}</small>${escapeHtml(value)}</span>
+  `).join("");
+  const summary = state.analysisSource === "photo"
+    ? (analysisResult?.summary || state.analysisSummary || "사진에서 확인한 단서를 바탕으로 추천을 만들었어요.")
+    : "직접 선택한 기준을 바탕으로 추천을 만들었어요.";
+  const evidence = analysisResult
+    ? `
+      <div class="sheet-info-list compact">
+        <p><strong>얼굴형 단서</strong><span>${escapeHtml((analysisResult.faceEvidence || []).join(" · ") || "선택한 얼굴형 기준을 사용했어요.")}</span></p>
+        <p><strong>컬러 단서</strong><span>${escapeHtml((analysisResult.colorEvidence || []).join(" · ") || "선택한 퍼스널컬러 기준을 사용했어요.")}</span></p>
+      </div>
+    `
+    : "";
+
+  openBottomSheet({
+    kicker: "추천 기준",
+    title: "이 기준으로 추천했어요.",
+    description: summary,
+    body: `<div class="sheet-chip-row">${items}</div>${evidence}`,
+    detent: analysisResult ? "large" : "medium",
+    actions: [
+      {
+        label: "기준 수정하기",
+        variant: "primary",
+        handler: () => {
+          closeBottomSheet({ restoreFocus: false });
+          if (state.analysisSource === "photo" && analysisResult) {
+            renderAnalysisReview();
+            showAnalysisStage("review");
+            showScreen("analysis");
+          } else {
+            beginQuiz();
+          }
+        }
+      },
+      { label: "닫기", handler: () => closeBottomSheet() }
+    ]
+  });
+}
+
+function openEditProfileSheet() {
+  const canReviewPhoto = state.analysisSource === "photo" && analysisResult;
+  openBottomSheet({
+    kicker: "수정",
+    title: "어떤 방식으로 다시 볼까요?",
+    description: "결과를 버리지 않고, 필요한 기준만 다시 조정할 수 있어요.",
+    body: `
+      <div class="sheet-info-list">
+        <p><strong>직접 선택으로 수정</strong><span>닉네임, 얼굴형, 퍼스널컬러, 무드를 차례로 다시 고릅니다.</span></p>
+        ${canReviewPhoto ? "<p><strong>사진 분석 기준 확인</strong><span>AI가 제안한 얼굴형과 컬러를 다시 확인하고 수정합니다.</span></p>" : ""}
+      </div>
+    `,
+    actions: [
+      ...(canReviewPhoto ? [{
+        label: "사진 분석 기준 확인",
+        variant: "primary",
+        handler: () => {
+          closeBottomSheet({ restoreFocus: false });
+          renderAnalysisReview();
+          showAnalysisStage("review");
+          showScreen("analysis");
+        }
+      }] : []),
+      { label: canReviewPhoto ? "직접 선택으로 수정" : "기준 다시 선택", variant: canReviewPhoto ? "secondary" : "primary", handler: () => { closeBottomSheet({ restoreFocus: false }); beginQuiz(); } },
+      { label: "닫기", handler: () => closeBottomSheet() }
+    ]
+  });
+}
+
+function sharePayload() {
+  const color = personalColors[state.personalColor] || personalColors.unknown;
+  const face = faceShapes[state.faceShape] || faceShapes.unknown;
+  const mood = moods[state.mood] || moods.natural;
+  const text = `나의 MOI 스타일: ${color.label} · ${face.label} · ${mood.label}`;
+  return { text, shareText: `${text}\n${window.location.href}` };
+}
+
+async function copyShareText() {
+  const { shareText } = sharePayload();
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(shareText);
+  } else {
+    const textarea = document.createElement("textarea");
+    textarea.value = shareText;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.append(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    if (!copied) throw new Error("copy failed");
+  }
+  showToast("스타일 결과 링크를 복사했어요.");
+}
+
+function openShareSheet() {
+  const { text } = sharePayload();
+  const nativeShareAvailable = Boolean(navigator.share);
+  openBottomSheet({
+    kicker: "공유",
+    title: "스타일 결과를 공유할까요?",
+    description: text,
+    body: `
+      <div class="sheet-share-preview">
+        <span>MOI</span>
+        <strong>${escapeHtml(text)}</strong>
+        <small>${escapeHtml(window.location.href)}</small>
+      </div>
+    `,
+    actions: [
+      ...(nativeShareAvailable ? [{
+        label: "공유 시트 열기",
+        variant: "primary",
+        handler: async () => {
+          try {
+            await navigator.share({ title: "나의 MOI 스타일", text, url: window.location.href });
+            closeBottomSheet({ restoreFocus: false });
+          } catch (error) {
+            if (error.name !== "AbortError") showToast("공유하지 못했어요.");
+          }
+        }
+      }] : []),
+      { label: "링크 복사", variant: nativeShareAvailable ? "secondary" : "primary", handler: async () => { await copyShareText(); closeBottomSheet({ restoreFocus: false }); } },
+      { label: "닫기", handler: () => closeBottomSheet() }
+    ]
+  });
+}
+
 document.querySelectorAll(".photo-start-button").forEach((button) => button.addEventListener("click", beginPhotoFlow));
 document.querySelectorAll(".manual-start-button").forEach((button) => button.addEventListener("click", () => beginQuiz({ reset: true })));
 document.querySelector("#demo-photo-button").hidden = !demoMode;
@@ -1083,30 +1385,24 @@ document.querySelector("#quiz-back").addEventListener("click", () => {
 });
 document.querySelector("#quiz-close").addEventListener("click", () => showScreen("home"));
 document.querySelector("#color-help").addEventListener("click", () => {
-  const box = document.querySelector("#color-help-box");
-  const hidden = !box.hidden;
-  box.hidden = hidden;
-  document.querySelector("#color-help").setAttribute("aria-expanded", String(!hidden));
-  document.querySelector("#color-help").textContent = hidden ? "퍼스널컬러 고르는 힌트 보기" : "퍼스널컬러 고르는 힌트 접기";
+  openBottomSheet({
+    kicker: "퍼스널컬러 힌트",
+    title: "모르면 뉴트럴로 시작해도 괜찮아요.",
+    description: "정확한 진단보다 오늘 바로 실패 확률을 낮추는 기준을 먼저 잡는 흐름이에요.",
+    body: `
+      <div class="sheet-info-list">
+        <p><strong>웜이 편하다면</strong><span>아이보리, 베이지, 코랄, 브라운이 얼굴 가까이 왔을 때 편안한지 봐주세요.</span></p>
+        <p><strong>쿨이 편하다면</strong><span>화이트, 그레이, 로즈, 블루 계열이 더 맑아 보이는지 확인해 주세요.</span></p>
+        <p><strong>확신이 없다면</strong><span>‘잘 모르겠어요’를 선택하면 무난한 뉴트럴 팔레트로 추천합니다.</span></p>
+      </div>
+    `,
+    actions: [
+      { label: "알겠어요", variant: "primary", handler: () => closeBottomSheet() }
+    ]
+  });
 });
-document.querySelector("#edit-profile").addEventListener("click", () => {
-  if (state.analysisSource === "photo" && analysisResult) {
-    renderAnalysisReview();
-    showAnalysisStage("review");
-    showScreen("analysis");
-  } else {
-    beginQuiz();
-  }
-});
-document.querySelector("#view-analysis-note").addEventListener("click", () => {
-  if (analysisResult) {
-    renderAnalysisReview();
-    showAnalysisStage("review");
-    showScreen("analysis");
-  } else {
-    showToast("추천 기준을 확인했어요.");
-  }
-});
+document.querySelector("#edit-profile").addEventListener("click", openEditProfileSheet);
+document.querySelector("#view-analysis-note").addEventListener("click", openAnalysisNoteSheet);
 
 document.querySelector(".category-tabs").addEventListener("click", (event) => {
   const tab = event.target.closest(".category-tab");
@@ -1129,42 +1425,33 @@ resultAreaInput?.addEventListener("keydown", (event) => {
   }
 });
 
-document.querySelector("#share-result").addEventListener("click", async () => {
-  const color = personalColors[state.personalColor] || personalColors.unknown;
-  const face = faceShapes[state.faceShape] || faceShapes.unknown;
-  const text = `나의 MOI 스타일: ${color.label} · ${face.label} · ${moods[state.mood].label}`;
-  const shareText = `${text}\n${window.location.href}`;
-  const copyShareText = async () => {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(shareText);
-    } else {
-      const textarea = document.createElement("textarea");
-      textarea.value = shareText;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.append(textarea);
-      textarea.select();
-      const copied = document.execCommand("copy");
-      textarea.remove();
-      if (!copied) throw new Error("copy failed");
-    }
-    showToast("스타일 결과 링크를 복사했어요.");
-  };
+document.querySelector("#share-result").addEventListener("click", openShareSheet);
+
+sheetBackdrop?.addEventListener("click", () => closeBottomSheet());
+sheetClose?.addEventListener("click", () => closeBottomSheet());
+sheetGrabber?.addEventListener("pointerdown", beginSheetDrag);
+sheetPanel?.addEventListener("pointerdown", (event) => {
+  if (event.target.closest(".sheet-grabber")) return;
+  if (event.target === sheetPanel) beginSheetDrag(event);
+});
+sheetPanel?.addEventListener("pointermove", moveSheetDrag);
+sheetPanel?.addEventListener("pointerup", endSheetDrag);
+sheetPanel?.addEventListener("pointercancel", endSheetDrag);
+sheetActions?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-sheet-action]");
+  if (!button) return;
+  const handler = sheetActionHandlers.get(button.dataset.sheetAction);
+  if (!handler) return;
+  button.disabled = true;
   try {
-    const prefersNativeShare = navigator.share && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    if (prefersNativeShare) {
-      await navigator.share({ title: "나의 MOI 스타일", text, url: window.location.href });
-    } else {
-      await copyShareText();
-    }
-  } catch (error) {
-    if (error.name === "AbortError") return;
-    try {
-      await copyShareText();
-    } catch {
-      showToast("공유하지 못했어요. 잠시 후 다시 시도해 주세요.");
-    }
+    await handler();
+  } finally {
+    button.disabled = false;
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && bottomSheet && !bottomSheet.hidden) {
+    closeBottomSheet();
   }
 });
 
