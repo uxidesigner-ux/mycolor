@@ -58,7 +58,7 @@ components:
     rounded: "{rounded.md}"
 ---
 
-# Design System: MOI v0.1.7
+# Design System: MOI v0.1.8
 
 ## 1. Overview
 
@@ -134,6 +134,18 @@ MOI의 제품 UI는 화이트/그레이/블랙 중심이다.
 - 결과 첫 화면은 요약 카드 3개가 우선이다.
 - “내 기준 / 오늘 바로 하기 / 피하면 좋은 것”의 정보 레벨을 회색 면과 검정 emphasis 카드로 구분한다.
 - 지도/쇼핑 링크는 검정 텍스트와 옅은 회색 pill로 처리한다.
+
+### Mobile Interaction
+
+- 모바일 입력 필드는 iOS 포커스 확대를 막기 위해 항상 16px 이상으로 둔다.
+- 포커스 상태는 높이/두께 변화 없이 outline 또는 box-shadow로만 표현한다.
+- 하단 토스트와 floating feedback은 `env(safe-area-inset-bottom)`을 고려해 브라우저 툴바와 겹치지 않게 둔다.
+
+### Toast / Feedback
+
+- 토스트는 “저장했어요”, “복사했어요” 같은 짧은 상태 피드백에만 사용한다.
+- 긴 설명이나 판단 근거는 토스트가 아니라 카드 내부 안내문으로 제공한다.
+- 모바일 토스트는 화면 중앙을 가리지 않고 하단 safe-area 위에 짧게 표시한다.
 
 ## 5. Do / Don’t
 

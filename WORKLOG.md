@@ -559,3 +559,58 @@
 - 남은 일:
   - OpenAI Platform에서 API billing/credit/quota를 활성화해야 실제 AI 분석 완료 응답을 받을 수 있음.
   - 장기 운영 전 Cloudflare GitHub secret의 임시 OAuth token을 전용 `Edit Cloudflare Workers` API token으로 교체 권장.
+
+## 2026-06-25 KST — 모바일 UI 디테일 개선 제안 점검
+
+- 요청 흐름: 모바일 결과 화면에서 토스트가 어색하고, 인풋 포커스 시 화면이 확대되는 문제 제보. 구현 전 전체 UI 디테일 제안 요청.
+- 버전:
+  - 현재 앱 버전 `0.1.7`, 제안 단계라 버전 변경 없음.
+- 확인한 내용:
+  - 첨부 모바일 스크린샷 기준으로 토스트가 긴 안내문을 담으면서 결과 콘텐츠와 브라우저 하단 툴바를 가림.
+  - `styles.css`에서 지역 입력 필드가 `font-size: 14px`로 지정되어 iOS 포커스 자동 확대 가능성이 큼.
+  - 토스트, 입력 필드, safe-area, 카드 라운드/색상 값에서 디자인 시스템 토큰과 다른 값들이 남아 있어 화면별 감각이 흔들림.
+  - Impeccable product register와 `PRODUCT.md`/`DESIGN.md` 기준으로 모바일 제품 UI 관점의 개선 우선순위를 정리함.
+- 실행:
+  - `rg`로 toast/input/focus/result/safe-area 관련 코드 위치 확인.
+  - Impeccable context 로드.
+  - `node /Users/nike/.agents/skills/impeccable/scripts/detect.mjs --json index.html app.js styles.css` 실행.
+- 결과:
+  - 기능 오류보다는 디자인 시스템 drift advisory가 다수 확인됨.
+  - 다음 작업 후보: `v0.1.8` 모바일 interaction polish로 toast 재설계, iOS input zoom 방지, bottom safe-area 보정, 모바일 카드/CTA 리듬 정리.
+
+## 2026-06-25 KST — v0.1.8 모바일 interaction polish 구현
+
+- 요청 흐름: 제안한 모바일 UI 디테일 개선안을 실제 구현.
+- 버전:
+  - `0.1.7` → `0.1.8`
+- 조치:
+  - 토스트를 긴 설명용 말풍선에서 짧은 상태 피드백용 스낵바로 정리.
+  - 긴 분석 요약을 토스트에 그대로 노출하지 않고 “추천 기준을 확인했어요.”처럼 짧은 피드백으로 변경.
+  - 모바일 토스트 위치를 `env(safe-area-inset-bottom)` 기반으로 보정하고, 하단 브라우저 툴바와 겹치지 않도록 92px 여유를 둠.
+  - iOS 입력 포커스 확대 방지를 위해 `input`, `textarea`, `select` 기본 폰트 크기와 지역 입력 필드를 16px 이상으로 통일.
+  - 입력 포커스 상태는 크기 변화 없이 border/background/box-shadow만 변경되도록 정리.
+  - 모바일 hover transform을 비활성화해 터치 환경에서 불필요한 흔들림을 줄임.
+  - 홈 기본 CTA가 `manual-start-button` 스타일에 덮여 검정 배경 위 검정 텍스트처럼 보이는 문제를 수정.
+  - 결과 화면의 영문 키커 일부를 한국어 우선 문구로 정리.
+  - `DESIGN.md`에 모바일 입력/토스트/safe-area 피드백 원칙 추가.
+- 파일:
+  - `DESIGN.md`
+  - `WORKLOG.md`
+  - `app.js`
+  - `config.js`
+  - `index.html`
+  - `package.json`
+  - `styles.css`
+- 검증:
+  - `npm run verify` 통과, `Version verified: 0.1.8` 확인.
+  - `git diff --check` 통과.
+  - 로컬 preview `http://localhost:4173`에서 HTTP 200 확인.
+  - 모바일 390px Playwright/Chrome 계산값 확인:
+    - 홈 CTA 텍스트: 흰색 / 배경 검정 정상.
+    - 결과 화면 활성 상태 정상.
+    - 토스트 문구: “추천 기준을 확인했어요.”
+    - 토스트 하단 여유: 92px.
+    - 토스트 radius: 14px, shadow 없음.
+    - 지역 입력 font-size: 16px, height: 52px.
+- 참고:
+  - Impeccable detector는 기존 CSS literal color/radius drift 81건을 advisory로 계속 보고함. 대부분 과거 스타일 잔재 및 추천 컬러 팔레트 관련 값이며, 별도 디자인 토큰 정리 작업으로 분리하는 것이 좋음.

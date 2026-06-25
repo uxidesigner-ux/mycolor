@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.7";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.8";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -357,7 +357,7 @@ function syncPhotoAvailability() {
 function showPhotoUnavailableNotice() {
   if (photoAvailabilityNote) photoAvailabilityNote.hidden = false;
   if (photoUnavailableCard) photoUnavailableCard.hidden = false;
-  showToast("사진 분석은 현재 준비 중이에요. 지금은 직접 선택으로 리포트를 만들 수 있습니다.");
+  showToast("사진 분석 준비 중이에요. 직접 선택으로 시작해 주세요.");
 }
 
 function beginPhotoFlow() {
@@ -780,7 +780,7 @@ function saveAreaFromResult() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   renderAreaSetting();
   renderCategory(currentCategory);
-  showToast(state.area ? `${state.area} 기준으로 주변 숍을 볼게요.` : "활동 지역을 비웠어요.");
+  showToast(state.area ? "활동 지역을 저장했어요." : "활동 지역을 비웠어요.");
 }
 
 function focusAreaSetting() {
@@ -793,7 +793,7 @@ function focusAreaSetting() {
 function openMapSearch(query) {
   if (!areaLabel()) {
     focusAreaSetting();
-    showToast("주변 숍을 보려면 활동 지역을 먼저 입력해 주세요.");
+    showToast("활동 지역을 먼저 입력해 주세요.");
     return;
   }
   window.open(mapLink(query), "_blank", "noopener,noreferrer");
@@ -975,12 +975,16 @@ function renderCategory(category) {
   requestAnimationFrame(() => { recommendationContent.style.animation = ""; });
 }
 
-function showToast(message) {
+function showToast(message, { duration = 2400 } = {}) {
   const toast = document.querySelector("#toast");
-  toast.textContent = message;
+  const normalizedMessage = normalizeText(message, 90);
+  const safeMessage = normalizedMessage.length > 48 ? `${normalizedMessage.slice(0, 47)}…` : normalizedMessage;
+  if (!safeMessage) return;
+  toast.textContent = safeMessage;
+  toast.classList.toggle("is-long", safeMessage.length > 26);
   toast.classList.add("is-visible");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 2600);
+  toastTimer = setTimeout(() => toast.classList.remove("is-visible"), duration);
 }
 
 document.querySelectorAll(".photo-start-button").forEach((button) => button.addEventListener("click", beginPhotoFlow));
@@ -1100,7 +1104,7 @@ document.querySelector("#view-analysis-note").addEventListener("click", () => {
     showAnalysisStage("review");
     showScreen("analysis");
   } else {
-    showToast(state.analysisSummary || "내가 확인한 얼굴형과 퍼스널 컬러를 기준으로 추천했어요.");
+    showToast("추천 기준을 확인했어요.");
   }
 });
 
