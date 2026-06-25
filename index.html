@@ -10,8 +10,18 @@
     <link rel="icon" href="icon.svg" />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body class="is-splashing">
+    <noscript><style>.splash-screen{display:none}</style></noscript>
     <div class="noise" aria-hidden="true"></div>
+
+    <div class="splash-screen" id="splash-screen" role="status" aria-live="polite" aria-label="MOI 로딩 중">
+      <div class="splash-logo-stack">
+        <img class="splash-logo" src="icon.svg" alt="MOI" />
+        <p>Daily personal stylist</p>
+      </div>
+      <div class="splash-loading-bar" aria-hidden="true"><span></span></div>
+      <p class="splash-version" id="splash-version">v0.1.1</p>
+    </div>
 
     <header class="site-header">
       <a class="brand" href="#home" aria-label="MOI 홈">

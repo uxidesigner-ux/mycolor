@@ -1,4 +1,7 @@
 const STORAGE_KEY = "moi-style-profile-v1";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.1";
+const MIN_SPLASH_MS = 2000;
+const splashStartedAt = performance.now();
 
 const faceShapes = {
   oval: {
@@ -166,6 +169,8 @@ let selectedPhoto = null;
 let analysisResult = null;
 let loadingStepTimer = null;
 
+const splashScreen = document.querySelector("#splash-screen");
+const splashVersion = document.querySelector("#splash-version");
 const screens = [...document.querySelectorAll("[data-screen]")];
 const steps = [...document.querySelectorAll(".quiz-step")];
 const nextButton = document.querySelector("#quiz-next");
@@ -187,6 +192,24 @@ const analysisCompleteButton = document.querySelector("#analysis-complete-button
 const validImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const analysisEndpoint = window.MOI_CONFIG?.analysisEndpoint?.trim() || "";
 const demoMode = Boolean(window.MOI_CONFIG?.demoMode);
+
+function hideSplash() {
+  if (!splashScreen) return;
+  splashScreen.classList.add("is-hidden");
+  splashScreen.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-splashing");
+  window.setTimeout(() => splashScreen.remove(), 460);
+}
+
+function scheduleSplashDismiss() {
+  if (splashVersion) splashVersion.textContent = `v${APP_VERSION}`;
+  if (!splashScreen) {
+    document.body.classList.remove("is-splashing");
+    return;
+  }
+  const elapsed = performance.now() - splashStartedAt;
+  window.setTimeout(hideSplash, Math.max(0, MIN_SPLASH_MS - elapsed));
+}
 
 function readSavedProfile() {
   try {
@@ -879,3 +902,5 @@ if (window.location.hash === "#result" && hasSavedProfile) {
   renderCategory("today");
   showScreen("result");
 }
+
+window.addEventListener("load", scheduleSplashDismiss, { once: true });

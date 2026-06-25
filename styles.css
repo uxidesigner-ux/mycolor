@@ -28,6 +28,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+body.is-splashing { overflow: hidden; }
 button, input { font: inherit; }
 button { color: inherit; }
 a { color: inherit; }
@@ -39,6 +40,99 @@ a { color: inherit; }
   pointer-events: none;
   opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");
+}
+
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  min-width: 320px;
+  color: var(--white);
+  background:
+    radial-gradient(circle at 70% 18%, rgba(239, 143, 109, 0.32), transparent 24%),
+    radial-gradient(circle at 18% 78%, rgba(155, 170, 140, 0.18), transparent 28%),
+    var(--ink);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 420ms ease, visibility 420ms ease;
+}
+
+.splash-screen::before {
+  content: "";
+  position: absolute;
+  inset: 24px;
+  border: 1px solid rgba(255, 253, 249, 0.12);
+  pointer-events: none;
+}
+
+.splash-screen.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash-logo-stack {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  gap: 20px;
+  transform: translateY(-12px);
+}
+
+.splash-logo {
+  width: clamp(92px, 22vw, 136px);
+  height: clamp(92px, 22vw, 136px);
+  border-radius: 30px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
+.splash-logo-stack p {
+  margin: 0;
+  color: rgba(255, 253, 249, 0.72);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.splash-loading-bar {
+  position: absolute;
+  bottom: 92px;
+  left: 50%;
+  width: min(184px, 42vw);
+  height: 1px;
+  overflow: hidden;
+  background: rgba(255, 253, 249, 0.18);
+  transform: translateX(-50%);
+}
+
+.splash-loading-bar span {
+  display: block;
+  width: 45%;
+  height: 100%;
+  background: var(--coral);
+  animation: splash-load 1200ms cubic-bezier(.2,.7,.2,1) infinite;
+}
+
+.splash-version {
+  position: absolute;
+  right: 0;
+  bottom: 34px;
+  left: 0;
+  margin: 0;
+  color: rgba(255, 253, 249, 0.54);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+@keyframes splash-load {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(230%); }
 }
 
 .site-header {
