@@ -1,5 +1,5 @@
 const STORAGE_KEY = "moi-style-profile-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.3";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.4";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -398,7 +398,7 @@ async function preparePhoto(file) {
   canvas.width = width;
   canvas.height = height;
   const context = canvas.getContext("2d", { alpha: false });
-  context.fillStyle = "#f7f3ed";
+  context.fillStyle = "#ffffff";
   context.fillRect(0, 0, width, height);
   context.drawImage(source, 0, 0, width, height);
   if (typeof source.close === "function") source.close();
@@ -437,19 +437,19 @@ function createDemoPhoto() {
   canvas.height = 800;
   const context = canvas.getContext("2d");
   const background = context.createLinearGradient(0, 0, 600, 800);
-  background.addColorStop(0, "#e7d7c7");
-  background.addColorStop(1, "#b8c4ba");
+  background.addColorStop(0, "#f7f7f7");
+  background.addColorStop(1, "#e8e8e8");
   context.fillStyle = background;
   context.fillRect(0, 0, 600, 800);
-  context.fillStyle = "#3e342e";
+  context.fillStyle = "#222222";
   context.beginPath();
   context.ellipse(300, 315, 155, 205, 0, 0, Math.PI * 2);
   context.fill();
-  context.fillStyle = "#c9977c";
+  context.fillStyle = "#cfcfcf";
   context.beginPath();
   context.ellipse(300, 335, 110, 155, 0, 0, Math.PI * 2);
   context.fill();
-  context.fillStyle = "#f0e8df";
+  context.fillStyle = "#ffffff";
   context.beginPath();
   context.ellipse(300, 735, 235, 260, 0, 0, Math.PI * 2);
   context.fill();

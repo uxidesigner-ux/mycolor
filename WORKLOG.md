@@ -290,3 +290,70 @@
 - 남은 일:
   - 사진 분석을 실제 production에서 켜려면 GitHub Actions 변수 `MOI_PHOTO_ANALYSIS_ENABLED=true`와 Worker `OPENAI_API_KEY` secret 설정이 필요.
   - 디자인 토큰 정합성을 더 엄격하게 맞추려면 `DESIGN.md` 팔레트/반경 스케일 업데이트 또는 CSS tokenization 후속 작업 권장.
+
+## 2026-06-25 KST — v0.1.4 화이트/그레이 기반 UI 리디자인
+
+- 요청: 현재 UI가 날카롭고 붉으스레해 무겁게 느껴지므로, 화해 스타일을 참고해 전체를 화이트와 옅은 그레이톤으로 바꾸고 포인트만 블랙에 가깝게 처리.
+- 버전:
+  - `0.1.3` → `0.1.4`
+- 레퍼런스 확인:
+  - `https://www.hwahae.co.kr/` 메인 구조 확인.
+  - 공개 CSS에서 반복되는 색상 축 확인: `#fff`, `#fafafa`, `#f7f7f7`, `#f2f2f2`, `#e8e8e8`, `#d8d8d8`, `#111`, `#666`, `#999`.
+- 조치:
+  - `package.json`, `config.js`, `app.js`, 스플래시 표기를 `0.1.4`로 동기화.
+  - `DESIGN.md`를 v0.1.4 디자인 시스템으로 재작성.
+  - 전역 토큰을 화이트/쿨그레이/블랙 중심으로 변경.
+  - UI 폰트를 산세리프 중심으로 통일하고 세리프/이탤릭 장식 사용을 제거.
+  - 기존 코랄/크림/따뜻한 종이톤을 UI chrome에서 제거.
+  - CTA, 선택 상태, 활성 탭, 강조 결과 카드만 `#111111` 중심으로 처리.
+  - 카드/탭/입력/추천/결과/사진 분석 화면을 그림자 없는 옅은 회색 surface와 얇은 border 중심으로 재스킨.
+  - 기존 장식 오브젝트, orbit, portrait art, floating note, warm illustration을 숨김 처리해 화면을 가볍게 정리.
+  - 앱 아이콘과 manifest theme/background color를 화이트/블랙 톤으로 변경.
+  - 로컬 데모 사진 캔버스 기본색도 회색톤으로 정리.
+- 파일:
+  - `DESIGN.md`
+  - `WORKLOG.md`
+  - `app.js`
+  - `config.js`
+  - `icon.svg`
+  - `index.html`
+  - `manifest.webmanifest`
+  - `package.json`
+  - `styles.css`
+- 검증:
+  - `npm run check` 통과, `Version verified: 0.1.4` 확인.
+  - `npm run build` 통과.
+  - `npm run verify` 통과.
+  - `git diff --check` 통과.
+  - 모바일 390×844 로컬 preview 확인:
+    - body background `rgb(255,255,255)`.
+    - hero card background `rgb(250,250,250)`.
+    - primary CTA background `rgb(17,17,17)`.
+    - CTA 첫 화면 노출 및 `scrollWidth=390`.
+    - 직접 선택 → 모름 선택 → 결과 생성 정상.
+    - 결과 summary/result hero background `rgb(250,250,250)`.
+    - 강조 카드/활성 탭 background `rgb(17,17,17)`.
+  - 브라우저 console error/warning 없음.
+  - Impeccable detector:
+    - 빌드 차단 이슈는 없음.
+    - 기존 CSS fallback에 남은 레거시 색상/반경 literal 때문에 design-system advisory가 다수 남음. 실제 화면은 v0.1.4 cascade가 우선 적용됨.
+- 남은 일:
+  - detector advisory까지 줄이려면 `styles.css`를 override 방식이 아니라 레거시 규칙 제거/토큰 치환 방식으로 한 번 더 정리하는 후속 작업 권장.
+
+## 2026-06-25 KST — v0.1.4 UI 리디자인 커밋/푸시
+
+- 요청: v0.1.4 화이트/그레이 UI 리디자인 작업을 커밋하고 원격 `main` 브랜치에 푸시.
+- 버전:
+  - `0.1.4`
+- 커밋 범위:
+  - 화이트/그레이/블랙 중심 UI 리디자인.
+  - v0.1.4 버전 동기화.
+  - 디자인 시스템 문서 갱신.
+  - 앱 아이콘/manifest/splash 톤 변경.
+  - 이번 작업 로그.
+- 예정 검증:
+  - `npm run verify`
+  - `git diff --check`
+- 커밋/푸시:
+  - 대상 브랜치: `main`
+  - 예정 커밋 메시지: `style: refresh monochrome product UI`

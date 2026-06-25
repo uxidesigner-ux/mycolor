@@ -3,8 +3,8 @@
   "short_name": "MOI",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f7f3ed",
-  "theme_color": "#241f1b",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
   "icons": [
     {
       "src": "icon.svg",
