@@ -164,3 +164,35 @@
 - 커밋/푸시:
   - 대상 브랜치: `codex/photo-style-analysis`
   - 예정 커밋 메시지: `chore: log deployment continuation`
+
+## 2026-06-25 KST — v0.1.2 PR merge 및 Pages 배포 확인
+
+- 요청: 이어서 진행.
+- 버전:
+  - `0.1.2`
+- 진행:
+  - PR `#2 [codex] add photo style analysis flow`를 Draft에서 Ready for review로 전환.
+  - PR 체크 `Product checks / verify` 재실행 및 성공 확인.
+  - PR `#2`를 `main`으로 merge.
+  - merge commit: `93e7a61593eef7ca516238a3d3cc2c4360300290`.
+  - GitHub Pages workflow `Deploy MOI to GitHub Pages` 실행 및 성공 확인.
+  - production URL 응답 확인:
+    - `https://uxidesigner-ux.github.io/mycolor/` → HTTP `200`
+    - `https://uxidesigner-ux.github.io/mycolor/config.js` → HTTP `200`
+    - `https://uxidesigner-ux.github.io/mycolor/manifest.webmanifest` → HTTP `200`
+  - production HTML에서 `v0.1.2` 표기 확인.
+  - production `config.js`에서 `appVersion: "0.1.2"` 및 `analysisEndpoint` 확인.
+- 발견한 이슈:
+  - `Deploy photo analysis Worker` workflow는 실패.
+  - 원인: GitHub Actions 환경에 `OPENAI_API_KEY` secret 값이 비어 있어 Cloudflare Wrangler action이 `Value for secret OPENAI_API_KEY not found in environment.`로 중단.
+  - 영향: 웹앱/Pages 배포는 정상. 사진 AI 분석 API는 GitHub secret 설정 전까지 production에서 서버 설정 오류가 날 수 있음.
+- 검증:
+  - `gh pr ready 2 --repo uxidesigner-ux/mycolor`
+  - `gh pr merge 2 --repo uxidesigner-ux/mycolor --merge`
+  - `gh run list --repo uxidesigner-ux/mycolor --branch main --limit 3`
+  - `gh run view 28147715509 --repo uxidesigner-ux/mycolor --json ...`
+  - `gh run view 28147715391 --repo uxidesigner-ux/mycolor --log-failed`
+  - `curl -L https://uxidesigner-ux.github.io/mycolor/`
+- 커밋/푸시:
+  - 대상: `main`
+  - 예정 커밋 메시지: `chore: log production deployment result`
