@@ -57,6 +57,10 @@ try {
   if (capturedRequest.body.model !== "gpt-5.4-mini") throw new Error("Worker did not use the configured model.");
   if (capturedRequest.body.store !== false) throw new Error("Worker must disable response storage.");
   if (capturedRequest.body.text?.format?.type !== "json_schema") throw new Error("Worker must request Structured Outputs.");
+  const schemaSource = JSON.stringify(capturedRequest.body.text.format.schema);
+  if (schemaSource.includes("minimum") || schemaSource.includes("maximum") || schemaSource.includes("maxItems")) {
+    throw new Error("Worker schema must stay within the strict Structured Outputs subset.");
+  }
   if (capturedRequest.body.input?.[0]?.content?.[1]?.type !== "input_image") throw new Error("Worker must send an image input.");
   if (!limiterKeys.includes("client:client_test_12345")) throw new Error("Worker must rate limit by stable client id when available.");
 

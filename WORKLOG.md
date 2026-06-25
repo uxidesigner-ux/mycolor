@@ -423,3 +423,85 @@
 - 커밋/푸시:
   - 대상 브랜치: `main`
   - 예정 커밋 메시지: `feat: enable photo style analysis`
+
+## 2026-06-25 KST — OpenAI API key 위치 안내
+
+- 요청: `OPENAI_API_KEY` secret 등록에 필요한 키가 어디 있는지 확인.
+- 버전:
+  - `0.1.5`
+- 조치:
+  - 이전에 열어둔 `gh secret set OPENAI_API_KEY` 대기 프롬프트를 종료해 잘못된 입력을 방지.
+  - OpenAI 공식 quickstart 기준으로 API key 생성 위치를 확인.
+- 안내:
+  - OpenAI Platform의 API keys 화면에서 새 secret key를 생성해야 함.
+  - ChatGPT Plus/Pro 구독과 OpenAI API key/billing은 별도임.
+  - key는 채팅에 붙여넣지 말고 GitHub CLI secret 입력 프롬프트나 GitHub Secrets UI에 직접 등록해야 함.
+- 검증:
+  - secret 값은 조회/기록하지 않음.
+
+## 2026-06-25 KST — 모바일 secret 입력 방식 안내
+
+- 요청: 모바일 환경이라 `gh secret set` 터미널 프롬프트에 OpenAI API key를 입력할 수 없음.
+- 버전:
+  - `0.1.5`
+- 조치:
+  - 대기 중이던 `gh secret set OPENAI_API_KEY` 프롬프트를 종료.
+  - 모바일에서는 GitHub 웹 UI의 Actions secrets 화면에서 직접 등록하는 방식으로 안내.
+- 안내:
+  - Secret name: `OPENAI_API_KEY`
+  - Secret value: 사용자가 OpenAI Platform에서 생성한 API key
+  - 등록 후 Worker workflow 재실행 필요.
+- 검증:
+  - secret 값은 채팅/로그에 입력하거나 기록하지 않음.
+
+## 2026-06-25 KST — Worker 재배포 실패 원인 확인
+
+- 요청: 사용자가 `OPENAI_API_KEY`를 GitHub Actions secret에 등록했다고 알려 Worker 재배포 진행.
+- 버전:
+  - `0.1.5`
+- 조치:
+  - `gh secret list --repo uxidesigner-ux/mycolor`로 `OPENAI_API_KEY` 등록 이름만 확인.
+  - `gh workflow run worker.yml --repo uxidesigner-ux/mycolor --ref main`으로 Worker 배포 workflow 실행.
+  - 실행 run `28171607167` 상태 확인.
+- 결과:
+  - `OPENAI_API_KEY`는 등록됨.
+  - Worker workflow는 실패.
+  - 실패 원인: 비대화형 GitHub Actions 환경에서 Wrangler가 `CLOUDFLARE_API_TOKEN` 환경 변수를 찾지 못함.
+  - 현재 repo secrets 목록에는 `OPENAI_API_KEY`만 표시됨.
+- 남은 일:
+  - GitHub Actions secrets에 `CLOUDFLARE_API_TOKEN`과 `CLOUDFLARE_ACCOUNT_ID`를 추가 등록해야 Worker 배포 재시도 가능.
+  - secret 값은 조회/기록하지 않음.
+
+## 2026-06-25 KST — v0.1.6 Cloudflare secret 등록 및 Worker schema 수정
+
+- 요청: Cloudflare API token/Account ID 생성 방법을 모르겠으니 대신 처리.
+- 버전:
+  - `0.1.5` → `0.1.6`
+- 조치:
+  - 로컬 Wrangler 로그인 상태 확인: `uxidesigner@gmail.com` 계정 OAuth 로그인 및 Account ID 조회 가능.
+  - Cloudflare 문서 확인 결과, 완전한 장기 API token 자동 생성은 Dashboard에서 초기 token 생성 권한이 필요함.
+  - 현재 로그인된 Wrangler OAuth token이 `CLOUDFLARE_API_TOKEN` 환경 변수로 동작하는지 테스트.
+  - 임시 해결로 GitHub Actions secrets에 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` 등록.
+  - Worker workflow `28172341205` 실행 및 성공 확인.
+  - 실제 Worker 호출 시 기존 503은 해소됐으나 OpenAI 400으로 502 응답 발생.
+  - 원인 추정: Structured Outputs strict schema subset에서 `minimum`, `maximum`, `maxItems` 제약이 거부됨.
+  - Worker JSON Schema에서 해당 제약을 제거하고, Worker 후처리에서 점수 clamp 및 evidence 길이 제한을 수행하도록 변경.
+  - 테스트에 schema subset 보호 assertion 추가.
+  - 앱/설정/스플래시/디자인 문서 버전을 `0.1.6`으로 동기화.
+- 파일:
+  - `DESIGN.md`
+  - `WORKLOG.md`
+  - `app.js`
+  - `config.js`
+  - `index.html`
+  - `package.json`
+  - `scripts/test-worker.mjs`
+  - `styles.css`
+  - `worker/src/index.js`
+- 검증:
+  - `npm run verify` 통과, `Version verified: 0.1.6` 확인.
+  - `git diff --check` 통과.
+- 남은 일:
+  - v0.1.6 커밋/푸시 후 Pages/Worker 재배포 및 실제 `/analyze` 재검증 필요.
+  - 현재 등록한 Cloudflare token은 로컬 OAuth 기반 임시 성격이므로, 장기 운영에는 Dashboard에서 전용 `Edit Cloudflare Workers` API token으로 교체 권장.
+  - secret 값은 조회/기록하지 않음.

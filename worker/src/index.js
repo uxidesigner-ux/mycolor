@@ -24,7 +24,7 @@ const STYLE_SCHEMA = {
       type: "object",
       additionalProperties: false,
       properties: {
-        score: { type: "integer", minimum: 0, maximum: 100 },
+        score: { type: "integer" },
         lighting: { type: "string", enum: ["good", "uneven", "poor"] },
         faceVisibility: { type: "string", enum: ["clear", "partial", "not_found"] },
         notes: { type: "string" }
@@ -32,11 +32,11 @@ const STYLE_SCHEMA = {
       required: ["score", "lighting", "faceVisibility", "notes"]
     },
     faceShape: { type: "string", enum: ["oval", "round", "square", "long", "heart", "unknown"] },
-    faceConfidence: { type: "integer", minimum: 0, maximum: 100 },
-    faceEvidence: { type: "array", items: { type: "string" }, maxItems: 3 },
+    faceConfidence: { type: "integer" },
+    faceEvidence: { type: "array", items: { type: "string" } },
     personalColor: { type: "string", enum: ["spring", "summer", "autumn", "winter", "unknown"] },
-    colorConfidence: { type: "integer", minimum: 0, maximum: 100 },
-    colorEvidence: { type: "array", items: { type: "string" }, maxItems: 3 },
+    colorConfidence: { type: "integer" },
+    colorEvidence: { type: "array", items: { type: "string" } },
     undertone: { type: "string", enum: ["warm", "cool", "neutral", "uncertain"] },
     contrast: { type: "string", enum: ["low", "medium", "high", "uncertain"] },
     summary: { type: "string" }
@@ -150,11 +150,36 @@ function normalizeChoice(value, validValues) {
   return "unknown";
 }
 
+function clampScore(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(100, Math.round(number)));
+}
+
+function normalizeEvidence(value, fallback) {
+  if (!Array.isArray(value)) return [fallback];
+  return value
+    .filter((item) => typeof item === "string" && item.trim())
+    .slice(0, 3)
+    .map((item) => item.trim().slice(0, 120));
+}
+
 function normalizeAnalysis(analysis) {
   return {
     ...analysis,
+    quality: {
+      score: clampScore(analysis?.quality?.score),
+      lighting: ["good", "uneven", "poor"].includes(analysis?.quality?.lighting) ? analysis.quality.lighting : "poor",
+      faceVisibility: ["clear", "partial", "not_found"].includes(analysis?.quality?.faceVisibility) ? analysis.quality.faceVisibility : "not_found",
+      notes: typeof analysis?.quality?.notes === "string" ? analysis.quality.notes.slice(0, 160) : "사진 단서가 충분하지 않아요."
+    },
     faceShape: normalizeChoice(analysis?.faceShape, VALID_FACE_SHAPES),
-    personalColor: normalizeChoice(analysis?.personalColor, VALID_PERSONAL_COLORS)
+    faceConfidence: clampScore(analysis?.faceConfidence),
+    faceEvidence: normalizeEvidence(analysis?.faceEvidence, "사진 속 얼굴 윤곽 단서를 충분히 찾지 못했어요."),
+    personalColor: normalizeChoice(analysis?.personalColor, VALID_PERSONAL_COLORS),
+    colorConfidence: clampScore(analysis?.colorConfidence),
+    colorEvidence: normalizeEvidence(analysis?.colorEvidence, "사진의 조명과 색감 단서가 충분하지 않아요."),
+    summary: typeof analysis?.summary === "string" ? analysis.summary.slice(0, 180) : "사진에서 확인 가능한 스타일 단서를 정리했어요."
   };
 }
 
