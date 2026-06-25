@@ -19,7 +19,7 @@ typography:
     letterSpacing: "-0.03em"
   hero:
     fontFamily: "DM Serif Display, Times New Roman, serif"
-    fontSize: "clamp(4rem, 7.6vw, 7rem)"
+    fontSize: "clamp(4rem, 7.2vw, 6rem)"
     fontWeight: 400
     lineHeight: 0.96
     letterSpacing: "-0.04em"

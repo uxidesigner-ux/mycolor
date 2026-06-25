@@ -1,5 +1,5 @@
 const STORAGE_KEY = "moi-style-profile-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.1";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.2";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -539,7 +539,7 @@ function isStepComplete() {
 function refreshStep() {
   steps.forEach((step, index) => { step.hidden = index !== currentStep; });
   progressLabel.textContent = `${currentStep + 1} / ${steps.length}`;
-  progressBar.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
+  progressBar.style.transform = `scaleX(${(currentStep + 1) / steps.length})`;
   nextButton.textContent = currentStep === steps.length - 1 ? "나의 스타일 리포트 보기" : "다음";
   nextButton.disabled = !isStepComplete();
   document.querySelector("#quiz-back").setAttribute("aria-label", currentStep === 0 ? "홈으로" : "이전 단계");
