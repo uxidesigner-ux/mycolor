@@ -698,3 +698,68 @@
     - 좌측 서비스 요약 노출.
     - 우측 모바일 시작 화면 430px 폭으로 노출.
   - Impeccable detector: 기존 literal color/radius drift 81건 유지. 새 홈으로 인한 추가 drift는 제거.
+
+## 2026-06-26 KST — v0.2.0 Cloudflare CI token 재등록 점검
+
+- 요청 흐름: 이전에 임시 연결이라고 표시했던 Cloudflare GitHub Actions token을 다시 점검하고 장기 운영용 token 교체를 진행.
+- 버전:
+  - `0.2.0` 유지. 제품 코드 변경 없이 인증/배포 연결 상태만 점검.
+- 확인:
+  - 로컬 Wrangler 로그인 상태는 `uxidesigner@gmail.com` Cloudflare 계정 OAuth로 유지됨.
+  - Cloudflare Worker `moi-style-analysis` 존재 확인.
+  - Worker secret 목록에 `OPENAI_API_KEY` 등록 확인. secret 값은 조회/기록하지 않음.
+  - GitHub Actions secrets 이름 `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `OPENAI_API_KEY` 존재 확인. secret 값은 조회/기록하지 않음.
+  - Repository variable `MOI_ANALYSIS_ENDPOINT=https://moi-style-analysis.uxidesigner-mycolor.workers.dev/analyze` 유지 확인.
+- 조치:
+  - Cloudflare API token 자동 생성을 시도하기 전 권한 확인.
+  - 현재 Cloudflare API 실행 권한으로는 token permission group 접근이 `Unauthorized to access requested resource`로 차단됨.
+  - Cloudflare Dashboard `https://dash.cloudflare.com/profile/api-tokens`를 인앱 브라우저에 열었으나 로그인 화면에서 사용자 인증 필요.
+  - 기존 GitHub Actions `CLOUDFLARE_API_TOKEN`의 유효성을 확인하기 위해 Worker workflow를 수동 실행.
+- 검증:
+  - Worker workflow run `28209221230` 실행.
+  - 결과: 실패.
+  - 실패 지점: `Deploy Worker and OpenAI secret` 단계의 `wrangler secret bulk`.
+  - 실패 원인: Cloudflare API 인증 실패.
+    - `Authentication error [code: 10000]`
+    - `Invalid access token [code: 9109]`
+- 결론:
+  - 기존 GitHub Actions의 `CLOUDFLARE_API_TOKEN`은 더 이상 유효하지 않음.
+  - 장기 운영용 전용 Cloudflare API token을 Dashboard에서 새로 생성한 뒤 GitHub secret `CLOUDFLARE_API_TOKEN`으로 교체해야 함.
+- 다음 단계:
+  - Cloudflare Dashboard 로그인.
+  - `Edit Cloudflare Workers` 템플릿 또는 동등 권한의 custom token 생성.
+  - 생성된 token secret을 GitHub Actions secret `CLOUDFLARE_API_TOKEN`에 재등록.
+  - Worker workflow 재실행 및 성공 확인.
+
+## 2026-06-26 KST — v0.2.0 Cloudflare CI token 교체 완료
+
+- 요청 흐름: 사용자가 Cloudflare Dashboard에서 새 API token을 생성하고 복사 완료를 알림.
+- 버전:
+  - `0.2.0` 유지. 제품 코드 변경 없이 Cloudflare/GitHub Actions 인증 연결만 교체.
+- 보안 처리:
+  - Cloudflare token 값은 채팅/로그/터미널 출력에 기록하지 않음.
+  - 클립보드에서 읽은 token은 Cloudflare `/user/tokens/verify`로 active 상태만 확인.
+  - GitHub secret 등록 후 시스템 클립보드를 비움.
+  - 인앱 브라우저 URL의 token query를 제거하고 `https://dash.cloudflare.com/profile/api-tokens`로 정리.
+- 조치:
+  - 새 token 검증 성공:
+    - `success: true`
+    - `status: active`
+  - GitHub Actions secret `CLOUDFLARE_API_TOKEN` 교체.
+  - secret 목록에서 `CLOUDFLARE_API_TOKEN` 갱신 시각이 `2026-06-26T00:34:50Z`로 바뀐 것 확인.
+  - Worker workflow 수동 실행.
+- 검증:
+  - Worker workflow run `28209452088` 성공.
+  - `Deploy Worker and OpenAI secret` 단계 성공.
+  - Worker CORS preflight 확인:
+    - `OPTIONS https://moi-style-analysis.uxidesigner-mycolor.workers.dev/analyze`
+    - HTTP `204`
+    - `access-control-allow-origin: https://uxidesigner-ux.github.io`
+  - 공개 앱 config 확인:
+    - `analysisEndpoint: https://moi-style-analysis.uxidesigner-mycolor.workers.dev/analyze`
+    - `photoAnalysisEnabled: true`
+    - `appVersion: 0.2.0`
+  - Wrangler version list에서 `2026-06-26T00:35:18Z` Secret Change 및 `2026-06-26T00:35:21Z` Worker upload 확인.
+- 결론:
+  - 임시/무효화된 Cloudflare GitHub Actions token 문제가 해결됨.
+  - 현재 GitHub Actions에서 Worker secret 업로드 및 Worker 재배포가 정상 동작함.
