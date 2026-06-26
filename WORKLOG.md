@@ -657,3 +657,44 @@
     - 주변 숍 지역 입력 sheet open 정상.
     - sheet 지역 입력 font-size 16px, height 54px 확인.
     - sheet open 시 body scale 상태 확인.
+
+## 2026-06-26 KST — v0.2.0 기능 실행 중심 홈 개편
+
+- 요청 흐름: 기존 홈 화면은 보관하고, 스플래시 후 첫 화면을 “이미 알고 들어온 사용자” 기준의 즉시 실행 화면으로 개선.
+- 버전:
+  - `0.1.9` → `0.2.0`
+- 보관:
+  - 기존 설명형 홈의 복구 기준을 `archive/home-v0.1.9.md`에 기록.
+  - 원본 홈은 커밋 `c00b158 feat: add bottom sheet interactions`의 `index.html` / `styles.css`에서 복구 가능.
+- 조치:
+  - 홈에서 설명형 hero, 결과 미리보기, promise strip, feature card 섹션을 제거.
+  - 모바일 첫 화면은 큰 `사진 등록` 카드가 중심이 되도록 변경.
+  - 사진 등록 카드 클릭 시 production/photo-enabled 상태에서는 바로 `#analysis`로 이동하며 파일 선택 창을 열도록 연결.
+  - `사진 없이 직접 선택`, `저장된 스타일 보기`는 보조 액션 영역으로 이동.
+  - 모바일에서는 좌측 설명을 숨기고 기능 실행 화면만 노출.
+  - 데스크톱에서는 좌측에 서비스 요약만 간단히 두고, 우측에 모바일 시작 화면을 그대로 표시.
+  - 저장된 스타일 헤더 버튼은 모바일 홈 집중도를 위해 숨기고, 홈 내부 보조 액션으로만 노출.
+  - 새 홈 스타일의 과한 radius/letter-spacing을 디자인 토큰 기준으로 조정.
+  - `DESIGN.md`에 Functional Home 원칙 추가.
+- 파일:
+  - `DESIGN.md`
+  - `WORKLOG.md`
+  - `app.js`
+  - `archive/home-v0.1.9.md`
+  - `config.js`
+  - `index.html`
+  - `package.json`
+  - `styles.css`
+- 검증:
+  - `npm run verify` 통과, `Version verified: 0.2.0` 확인.
+  - `git diff --check` 통과.
+  - `npm run dev:photo` 로컬 mock photo-enabled 상태에서 모바일 390px / 데스크톱 1280px 캡처 확인.
+  - 모바일 390px 확인:
+    - `사진 등록` 카드가 첫 화면 중심.
+    - 좌측 설명 영역 `display: none`.
+    - 큰 사진 등록 카드 클릭 시 file chooser open 확인.
+    - 클릭 후 `#analysis` 이동 및 analysis guide 활성화 확인.
+  - 데스크톱 1280px 확인:
+    - 좌측 서비스 요약 노출.
+    - 우측 모바일 시작 화면 430px 폭으로 노출.
+  - Impeccable detector: 기존 literal color/radius drift 81건 유지. 새 홈으로 인한 추가 drift는 제거.

@@ -20,7 +20,7 @@
         <p>Daily personal stylist</p>
       </div>
       <div class="splash-loading-bar" aria-hidden="true"><span></span></div>
-      <p class="splash-version" id="splash-version">v0.1.9</p>
+      <p class="splash-version" id="splash-version">v0.2.0</p>
     </div>
 
     <header class="site-header">
@@ -35,96 +35,49 @@
     </header>
 
     <main>
-      <section class="screen landing-screen is-active" id="home-screen" data-screen="home">
-        <div class="hero-copy reveal">
-          <p class="eyebrow"><span></span> 오늘 바로 쓰는 스타일 진단 도구</p>
-          <h1>내 얼굴형과<br /><em>퍼스널컬러</em>로 오늘의 스타일 추천</h1>
-          <p class="hero-description">
-            사진 한 장 또는 직접 선택으로 얼굴형, 퍼스널컬러, 무드를 정리하고<br class="desktop-only" />
-            오늘 바로 시도할 헤어·메이크업·옷 추천을 받아보세요.
-          </p>
-          <div class="hero-actions">
-            <button class="primary-button manual-start-button hero-primary-action" type="button">
-              사진 없이 직접 선택
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
+      <section class="screen landing-screen start-screen is-active" id="home-screen" data-screen="home" aria-labelledby="home-title">
+        <aside class="start-explainer" aria-label="서비스 설명">
+          <p class="start-kicker">MOI</p>
+          <h1 id="home-title">데일리 퍼스널<br />스타일리스트</h1>
+          <p>사진 한 장 또는 직접 선택으로 얼굴형, 퍼스널컬러, 무드를 정리하고 오늘 바로 쓸 추천을 만듭니다.</p>
+          <dl class="start-summary-list">
+            <div><dt>입력</dt><dd>사진 또는 직접 선택</dd></div>
+            <div><dt>결과</dt><dd>헤어 · 메이크업 · 옷</dd></div>
+            <div><dt>보조</dt><dd>저장 · 공유 · 주변 숍</dd></div>
+          </dl>
+        </aside>
+
+        <section class="start-phone" aria-label="모바일 시작 화면">
+          <div class="start-phone-shell">
+            <div class="start-phone-top">
+              <span class="start-app-mark">M</span>
+              <div><strong>MOI</strong><small>Style check</small></div>
+            </div>
+
+            <button class="home-photo-card photo-start-button" type="button" data-pick-immediately="true" aria-describedby="photo-availability-note">
+              <span class="home-photo-icon" aria-hidden="true">
+                <svg viewBox="0 0 48 48"><path d="M15 14.5 18 10h12l3 4.5h5a4 4 0 0 1 4 4V35a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V18.5a4 4 0 0 1 4-4h5Z"/><circle cx="24" cy="26" r="8"/></svg>
+              </span>
+              <span class="home-photo-copy">
+                <small id="home-photo-status">사진으로 시작</small>
+                <strong id="home-photo-title">사진 등록</strong>
+                <span id="home-photo-description">얼굴이 잘 보이는 사진 한 장을 선택하세요.</span>
+              </span>
+              <span class="home-photo-format">JPG · PNG · WEBP</span>
             </button>
-            <button class="secondary-button photo-start-button photo-beta-button" type="button" aria-describedby="photo-availability-note">
-              사진 분석 준비 중
-              <span class="button-badge">BETA</span>
-            </button>
-            <button class="saved-inline-button" id="saved-report-inline-button" type="button" hidden>저장된 스타일 보기</button>
-            <p class="photo-availability-note" id="photo-availability-note">사진 분석은 준비 중이에요. 지금은 직접 선택으로 같은 스타일 리포트를 만들 수 있습니다.</p>
-            <ul class="trust-row" aria-label="사진 분석 안내">
-              <li>30초 안에 완료</li>
+
+            <div class="start-secondary-actions" aria-label="보조 시작 옵션">
+              <button class="secondary-button manual-start-button" type="button">사진 없이 직접 선택</button>
+              <button class="secondary-button saved-inline-button" id="saved-report-inline-button" type="button" hidden>저장된 스타일 보기</button>
+            </div>
+
+            <p class="photo-availability-note" id="photo-availability-note">사진 분석을 사용할 수 없으면 직접 선택으로 같은 리포트를 만들 수 있어요.</p>
+
+            <ul class="start-privacy-list" aria-label="사진 분석 안내">
               <li>사진 저장 안 함</li>
-              <li>결과 직접 수정 가능</li>
+              <li>결과 직접 수정</li>
+              <li>30초 안팎</li>
             </ul>
-          </div>
-          <ol class="hero-flow" aria-label="MOI 추천 진행 방식">
-            <li><strong>기준 선택</strong><span>모르면 넘어갈 수 있게</span></li>
-            <li><strong>추천 요약</strong><span>오늘 할 것부터 확인</span></li>
-            <li><strong>내가 확정</strong><span>추천은 내 기준으로</span></li>
-          </ol>
-        </div>
-
-        <div class="hero-visual reveal" aria-label="스타일 추천 미리보기">
-          <div class="orbit orbit-one"></div>
-          <div class="orbit orbit-two"></div>
-          <div class="look-card look-card-main">
-            <div class="look-card-top">
-              <span>오늘의 추천</span>
-              <span class="temperature">3분 리포트</span>
-            </div>
-            <div class="result-preview-list" aria-hidden="true">
-              <div><span>헤어</span><strong>소프트 레이어드 C컬</strong></div>
-              <div><span>립</span><strong>로지 코랄 포인트</strong></div>
-              <div class="avoid"><span>피해야 할 컬러</span><strong>탁한 차콜</strong></div>
-            </div>
-            <div class="look-card-bottom">
-              <p>얼굴형 · 퍼스널컬러 · 무드</p>
-              <div class="mini-palette"><i></i><i></i><i></i><i></i></div>
-            </div>
-          </div>
-          <div class="floating-note note-hair">
-            <span class="note-icon">✦</span>
-            <div><small>HAIR</small><strong>레이어드 C컬</strong></div>
-          </div>
-          <div class="floating-note note-lip">
-            <span class="lip-swatch"></span>
-            <div><small>LIP</small><strong>로지 코랄</strong></div>
-          </div>
-        </div>
-
-        <div class="promise-strip reveal">
-          <div><strong>얼굴형·컬러</strong><span>AI가 먼저 읽고<br />내가 다시 확인해요</span></div>
-          <div><strong>오늘의 추천</strong><span>헤어·뷰티·옷을<br />바로 적용할 수 있게</span></div>
-          <div><strong>다음 행동</strong><span>관리 주기와 주변 숍까지<br />자연스럽게 이어져요</span></div>
-        </div>
-
-        <section class="feature-section reveal" aria-labelledby="feature-title">
-          <div class="section-heading">
-            <p class="eyebrow"><span></span> 하나의 기준으로 이어지는 추천</p>
-            <h2 id="feature-title">당신의 취향을<br />매일의 선택으로.</h2>
-          </div>
-          <div class="feature-grid">
-            <article class="feature-card feature-hair">
-              <span class="feature-label">Hair direction</span>
-              <div class="feature-symbol">⌁</div>
-              <h3>Hair</h3>
-              <p>얼굴형을 보완하는 커트와 퍼스널 컬러에 맞는 염색, 관리 시점을 알려드려요.</p>
-            </article>
-            <article class="feature-card feature-beauty">
-              <span class="feature-label">Beauty palette</span>
-              <div class="feature-symbol">◒</div>
-              <h3>Beauty</h3>
-              <p>아이브로우부터 렌즈, 립과 섀도까지 어울리는 색만 간결하게 골라드려요.</p>
-            </article>
-            <article class="feature-card feature-wear">
-              <span class="feature-label">Daily wear</span>
-              <div class="feature-symbol">◇</div>
-              <h3>Wear</h3>
-              <p>오늘 원하는 무드와 베스트 컬러를 연결해 실패 없는 착장을 완성해요.</p>
-            </article>
           </div>
         </section>
       </section>

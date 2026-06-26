@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.1.9";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.0";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -209,6 +209,10 @@ const nameInput = document.querySelector("#name-input");
 const savedReportButton = document.querySelector("#saved-report-button");
 const savedReportInlineButton = document.querySelector("#saved-report-inline-button");
 const recommendationContent = document.querySelector("#recommendation-content");
+const homePhotoCard = document.querySelector(".home-photo-card");
+const homePhotoStatus = document.querySelector("#home-photo-status");
+const homePhotoTitle = document.querySelector("#home-photo-title");
+const homePhotoDescription = document.querySelector("#home-photo-description");
 const photoInput = document.querySelector("#photo-input");
 const photoDropzone = document.querySelector("#photo-dropzone");
 const photoUnavailableCard = document.querySelector("#photo-unavailable-card");
@@ -437,22 +441,14 @@ function showAnalysisStage(name) {
 }
 
 function syncPhotoAvailability() {
-  const heroManualButton = document.querySelector(".hero-primary-action");
-  const heroPhotoButton = document.querySelector(".photo-beta-button");
   if (photoUnavailableCard) photoUnavailableCard.hidden = photoAnalysisAvailable;
 
   if (photoAnalysisAvailable) {
-    if (heroPhotoButton) {
-      heroPhotoButton.classList.remove("secondary-button", "photo-beta-button");
-      heroPhotoButton.classList.add("primary-button", "hero-photo-primary");
-      heroPhotoButton.removeAttribute("aria-describedby");
-      heroPhotoButton.innerHTML = `사진으로 스타일 기준 찾기 ${arrowIcon()}`;
-    }
-    if (heroManualButton) {
-      heroManualButton.classList.remove("primary-button", "hero-primary-action");
-      heroManualButton.classList.add("manual-start-button");
-      heroManualButton.innerHTML = "사진 없이 직접 선택";
-    }
+    homePhotoCard?.classList.remove("is-unavailable");
+    homePhotoCard?.removeAttribute("aria-describedby");
+    if (homePhotoStatus) homePhotoStatus.textContent = "사진으로 시작";
+    if (homePhotoTitle) homePhotoTitle.textContent = "사진 등록";
+    if (homePhotoDescription) homePhotoDescription.textContent = "얼굴이 잘 보이는 사진 한 장을 선택하세요.";
     if (photoAvailabilityNote) photoAvailabilityNote.hidden = true;
     return;
   }
@@ -460,6 +456,10 @@ function syncPhotoAvailability() {
   document.querySelectorAll(".photo-start-button").forEach((button) => {
     button.setAttribute("aria-describedby", "photo-availability-note");
   });
+  homePhotoCard?.classList.add("is-unavailable");
+  if (homePhotoStatus) homePhotoStatus.textContent = "직접 선택 가능";
+  if (homePhotoTitle) homePhotoTitle.textContent = "사진 분석 준비 중";
+  if (homePhotoDescription) homePhotoDescription.textContent = "지금은 사진 없이 같은 리포트를 만들 수 있어요.";
 }
 
 function showPhotoUnavailableNotice() {
@@ -482,7 +482,7 @@ function showPhotoUnavailableNotice() {
   });
 }
 
-function beginPhotoFlow() {
+function beginPhotoFlow({ pickImmediately = false } = {}) {
   if (!photoAnalysisAvailable) {
     showPhotoUnavailableNotice();
     return;
@@ -494,6 +494,9 @@ function beginPhotoFlow() {
   analyzePhotoButton.disabled = true;
   showAnalysisStage("guide");
   showScreen("analysis");
+  if (pickImmediately) {
+    photoInput.click();
+  }
 }
 
 function resetStateForManual() {
@@ -1289,7 +1292,9 @@ function openShareSheet() {
   });
 }
 
-document.querySelectorAll(".photo-start-button").forEach((button) => button.addEventListener("click", beginPhotoFlow));
+document.querySelectorAll(".photo-start-button").forEach((button) => {
+  button.addEventListener("click", () => beginPhotoFlow({ pickImmediately: button.dataset.pickImmediately === "true" }));
+});
 document.querySelectorAll(".manual-start-button").forEach((button) => button.addEventListener("click", () => beginQuiz({ reset: true })));
 document.querySelector("#demo-photo-button").hidden = !demoMode;
 document.querySelector("#demo-photo-button").addEventListener("click", () => setSelectedPhoto(createDemoPhoto()));
