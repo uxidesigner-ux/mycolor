@@ -763,3 +763,126 @@
 - 결론:
   - 임시/무효화된 Cloudflare GitHub Actions token 문제가 해결됨.
   - 현재 GitHub Actions에서 Worker secret 업로드 및 Worker 재배포가 정상 동작함.
+
+## 2026-06-26 KST — v0.2.0 직접 선택 및 주요 기능 QA
+
+- 요청 흐름: 사용자가 “사진 없이 직접 선택”이 동작하지 않는다고 제보하고 전체 기능 체크 요청.
+- 버전:
+  - `0.2.0` 유지. 진단/QA 단계로 제품 코드 수정 없음.
+- 확인 환경:
+  - 공개 URL: `https://uxidesigner-ux.github.io/mycolor/`
+  - 모바일 뷰포트: `390 × 844`
+  - 로컬 mock photo 서버: `npm run dev:photo`, `http://localhost:4173`
+- 정적 검증:
+  - `npm run check` 통과.
+  - `npm run verify` 통과.
+  - 공개 config 확인:
+    - `analysisEndpoint: https://moi-style-analysis.uxidesigner-mycolor.workers.dev/analyze`
+    - `photoAnalysisEnabled: true`
+    - `appVersion: 0.2.0`
+- 직접 선택 QA:
+  - 공개 URL 데스크톱에서 `사진 없이 직접 선택` 클릭 시 `#quiz` 이동 정상.
+  - 공개 URL 모바일 390px에서 버튼이 첫 화면 안에 있고, 버튼 중앙을 가리는 레이어 없음.
+  - 공개 URL 모바일 390px에서 `사진 없이 직접 선택` 클릭 시 `quiz-screen` 이동 정상.
+  - 닉네임 입력 → 얼굴형 `잘 모르겠어요` → 퍼스널컬러 `잘 모르겠어요` → 무드 선택 → 결과 생성 정상.
+  - 지역 입력 없이도 결과 생성 정상.
+  - 결과 화면 요약 카드 3개 정상 노출:
+    - `내 기준`
+    - `오늘 바로 하기`
+    - `피하면 좋은 것`
+- 결과 기능 QA:
+  - 결과 탭 `오늘 / 헤어 / 뷰티 / 옷 / 관리` 전환 정상.
+  - `aria-pressed` 현재 탭 상태 정상 변경.
+  - 네이버 쇼핑 링크:
+    - 뷰티 탭 `추천 립 검색` 링크 정상 생성.
+    - 옷 탭 `비슷한 옷 찾아보기` 링크 정상 생성.
+  - 주변 숍 지도:
+    - 지역이 없을 때 `주변 숍 찾아보기` 클릭 시 지역 입력 바텀시트 정상 노출.
+    - 결과 화면 지역 입력 `서울 성수동` 저장 정상.
+    - 지역 저장 후 `지역 변경` 상태 및 안내 문구 정상 반영.
+  - 공유:
+    - `결과 공유하기` 클릭 시 공유 바텀시트 정상 노출.
+    - 네이티브 공유 가능 환경에서 `공유 시트 열기`, `링크 복사`, `닫기` 액션 정상 노출.
+  - 저장된 스타일:
+    - 저장된 프로필이 있을 때 홈의 `저장된 스타일 보기` 버튼 정상 노출.
+    - 클릭 시 `#result` 이동 및 저장 결과 렌더링 정상.
+  - 프로필 수정:
+    - `수정` 클릭 시 기준 수정 바텀시트 정상 노출.
+- 사진 분석 QA:
+  - 공개 Worker CORS preflight 정상.
+  - 개인정보 없는 단순 얼굴 일러스트 JPEG로 실제 Worker `/analyze` 호출 시 HTTP `200` 및 구조화 분석 JSON 반환 확인.
+  - 1×1 테스트 PNG는 OpenAI가 유효 이미지로 읽지 못해 Worker가 HTTP `400`과 “사진 파일을 읽지 못했어요” 메시지로 정상 매핑.
+  - 로컬 mock photo 플로우:
+    - 홈 사진 카드 클릭 → `analysis-screen` guide 이동 정상.
+    - `로컬 예시 사진으로 흐름 확인` → preview 이동 정상.
+    - 동의 체크 후 분석 버튼 활성화 정상.
+    - mock 분석 → review 이동 정상.
+    - review에서 얼굴형/퍼스널컬러 제안 선택 상태 정상.
+    - 무드 선택 후 `내가 확인한 기준으로 추천 보기` 활성화 정상.
+    - 사진 분석 결과 생성 및 결과 화면 이동 정상.
+- 발견 사항:
+  - 현재 재현 환경에서는 `사진 없이 직접 선택` 기능 오류를 재현하지 못함.
+  - GitHub Pages가 HTML/CSS/JS에 `cache-control: max-age=600`을 내려주므로, 배포 직후 모바일 브라우저가 10분가량 오래된 asset을 섞어 읽으면 일시적으로 동작이 어긋나 보일 가능성이 있음.
+  - 장기적으로는 `app.js`, `styles.css`, `config.js`에 version query 또는 hashed asset 경로를 붙여 배포 직후 캐시 혼선을 줄이는 개선이 권장됨.
+
+## 2026-06-26 KST — v0.2.1 RoutDiary 참고 홈 배치 개편
+
+- 요청 흐름: `https://routdiary.vercel.app` 화면 배치를 참고해 MOI 홈 화면을 다시 정리. 스플래시 동작은 현재 구조 유지.
+- 버전:
+  - `0.2.0` → `0.2.1`
+- 참고 화면 관찰:
+  - 웹/모바일 모두 430px 안팎의 모바일 앱 캔버스를 중심으로 사용.
+  - 상단 앱바, pill 형태 정렬/필터 칩, 2열 카드 그리드, 하단 floating nav와 주요 + 액션이 핵심 구조.
+  - 설명형 랜딩보다 “앱 홈에 바로 들어온 느낌”을 줌.
+- 조치:
+  - 기존 좌측 설명 + 우측 모바일 화면 분할 홈을 제거하고, 단일 모바일 앱 홈 구조로 재배치.
+  - 홈 구조를 `상단 앱바 → 시작 방식 칩 → 2열 카드 그리드 → 하단 floating nav`로 변경.
+  - 가장 큰 카드는 `사진 등록`으로 유지해 즉시 사용 가능성을 우선.
+  - `사진 없이 직접 선택`은 카드와 하단 nav에서 모두 접근 가능하게 반복 배치.
+  - 저장된 스타일은 저장 데이터가 있을 때 하단 nav에 노출되도록 유지.
+  - 데스크톱에서도 모바일 앱 캔버스를 중앙에 두고 양옆은 옅은 그레이 배경으로 처리.
+  - 스플래시 구조와 최소 2초 로딩 동작은 변경하지 않음.
+  - 배포 직후 모바일 캐시 혼선을 줄이기 위해 `styles.css`, `config.js`, `app.js` 로드에 `?v=0.2.1` query를 추가.
+  - `DESIGN.md` Functional Home 원칙을 새 앱 홈 구조에 맞게 업데이트.
+- 파일:
+  - `DESIGN.md`
+  - `WORKLOG.md`
+  - `app.js`
+  - `config.js`
+  - `index.html`
+  - `package.json`
+  - `styles.css`
+- 검증:
+  - `npm run check` 통과, `Version verified: 0.2.1` 확인.
+  - `git diff --check` 통과.
+  - `npm run verify` 통과.
+  - 로컬 `npm run dev:photo` 모바일 390px 확인:
+    - 새 홈 앱바, 모드 칩, 2열 카드 그리드 노출 정상.
+    - 하단 floating nav가 viewport 안에 고정 노출되는지 확인.
+    - `+` 버튼이 390px 화면 안에서 잘리지 않는지 확인.
+    - 직접 선택 카드 클릭 시 `#quiz` 이동 정상.
+    - 하단 nav 직접 선택 클릭 시 `#quiz` 이동 정상.
+  - 로컬 데스크톱 1280px 확인:
+    - 모바일 앱 캔버스가 화면 중앙에 정렬됨.
+    - 하단 floating nav가 앱 캔버스 중심에 정렬됨.
+  - `npm run preview` production artifact 확인:
+    - `styles.css?v=0.2.1`, `config.js?v=0.2.1`, `app.js?v=0.2.1` 로드 확인.
+    - `dist/config.js`에 `appVersion: 0.2.1` 확인.
+    - 사진 분석 endpoint가 없는 production preview에서도 직접 선택 카드 클릭 시 `#quiz` 이동 정상.
+
+## 2026-06-26 KST — v0.2.1 홈 개편 커밋/푸시
+
+- 요청: v0.2.1 RoutDiary 참고 홈 배치 개편 변경사항을 커밋하고 원격 `main`에 푸시.
+- 버전:
+  - `0.2.1`
+- 커밋 범위:
+  - 단일 모바일 앱 홈 구조(앱바 → 모드 칩 → 2열 카드 그리드 → 하단 floating nav)로 재배치.
+  - `styles.css`/`config.js`/`app.js` 로드에 `?v=0.2.1` 캐시버스팅 query 추가.
+  - `DESIGN.md` Functional Home 원칙 갱신, 버전 `0.2.1` 동기화.
+  - 이번 작업 로그.
+- 검증:
+  - `git diff --check` 통과.
+  - `npm run verify` 통과, `Version verified: 0.2.1`, `Worker analysis contract verified`, build OK.
+- 커밋/푸시:
+  - 대상 브랜치: `main`
+  - 커밋 메시지: `feat: rework home into app-style layout`

@@ -8,7 +8,7 @@
     <title>MOI — 데일리 퍼스널 스타일리스트</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=0.2.1" />
   </head>
   <body class="is-splashing">
     <noscript><style>.splash-screen{display:none}</style></noscript>
@@ -20,7 +20,7 @@
         <p>Daily personal stylist</p>
       </div>
       <div class="splash-loading-bar" aria-hidden="true"><span></span></div>
-      <p class="splash-version" id="splash-version">v0.2.0</p>
+      <p class="splash-version" id="splash-version">v0.2.1</p>
     </div>
 
     <header class="site-header">
@@ -36,25 +36,28 @@
 
     <main>
       <section class="screen landing-screen start-screen is-active" id="home-screen" data-screen="home" aria-labelledby="home-title">
-        <aside class="start-explainer" aria-label="서비스 설명">
-          <p class="start-kicker">MOI</p>
-          <h1 id="home-title">데일리 퍼스널<br />스타일리스트</h1>
-          <p>사진 한 장 또는 직접 선택으로 얼굴형, 퍼스널컬러, 무드를 정리하고 오늘 바로 쓸 추천을 만듭니다.</p>
-          <dl class="start-summary-list">
-            <div><dt>입력</dt><dd>사진 또는 직접 선택</dd></div>
-            <div><dt>결과</dt><dd>헤어 · 메이크업 · 옷</dd></div>
-            <div><dt>보조</dt><dd>저장 · 공유 · 주변 숍</dd></div>
-          </dl>
-        </aside>
-
-        <section class="start-phone" aria-label="모바일 시작 화면">
-          <div class="start-phone-shell">
-            <div class="start-phone-top">
-              <span class="start-app-mark">M</span>
-              <div><strong>MOI</strong><small>Style check</small></div>
+        <section class="start-mobile-app" aria-label="MOI 시작 화면">
+          <div class="start-appbar">
+            <div>
+              <p class="start-kicker">MOI</p>
+              <h1 id="home-title">스타일 시작</h1>
             </div>
+            <button class="start-icon-button photo-start-button" type="button" data-pick-immediately="true" aria-label="사진 등록">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5 7 6h10l2 2.5h1.5A2.5 2.5 0 0 1 23 11v7.5A2.5 2.5 0 0 1 20.5 21h-17A2.5 2.5 0 0 1 1 18.5V11a2.5 2.5 0 0 1 2.5-2.5H5Z"/><circle cx="12" cy="14" r="4"/></svg>
+            </button>
+          </div>
 
-            <button class="home-photo-card photo-start-button" type="button" data-pick-immediately="true" aria-describedby="photo-availability-note">
+          <div class="start-mode-strip" aria-label="시작 방식">
+            <button class="start-mode-chip photo-start-button is-active" type="button" data-pick-immediately="true">사진 분석</button>
+            <button class="start-mode-chip manual-start-button" type="button">직접 선택</button>
+            <span class="start-mode-chip is-muted">사진 저장 안 함</span>
+          </div>
+
+          <div class="start-card-grid">
+            <button class="home-photo-card start-card start-card-featured photo-start-button" type="button" data-pick-immediately="true" aria-describedby="photo-availability-note">
+              <span class="home-photo-visual" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </span>
               <span class="home-photo-icon" aria-hidden="true">
                 <svg viewBox="0 0 48 48"><path d="M15 14.5 18 10h12l3 4.5h5a4 4 0 0 1 4 4V35a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V18.5a4 4 0 0 1 4-4h5Z"/><circle cx="24" cy="26" r="8"/></svg>
               </span>
@@ -66,19 +69,42 @@
               <span class="home-photo-format">JPG · PNG · WEBP</span>
             </button>
 
-            <div class="start-secondary-actions" aria-label="보조 시작 옵션">
-              <button class="secondary-button manual-start-button" type="button">사진 없이 직접 선택</button>
-              <button class="secondary-button saved-inline-button" id="saved-report-inline-button" type="button" hidden>저장된 스타일 보기</button>
-            </div>
+            <button class="start-card start-card-action manual-start-button" type="button">
+              <span class="start-card-badge">Manual</span>
+              <strong>사진 없이<br />직접 선택</strong>
+              <small>닉네임, 얼굴형, 컬러, 무드만 고르면 바로 결과를 만들어요.</small>
+            </button>
 
-            <p class="photo-availability-note" id="photo-availability-note">사진 분석을 사용할 수 없으면 직접 선택으로 같은 리포트를 만들 수 있어요.</p>
+            <article class="start-card start-card-info">
+              <span class="start-card-badge">Result</span>
+              <strong>오늘 바로<br />해볼 것</strong>
+              <small>헤어 · 메이크업 · 옷 추천을 한 화면에서 정리해요.</small>
+            </article>
 
-            <ul class="start-privacy-list" aria-label="사진 분석 안내">
-              <li>사진 저장 안 함</li>
-              <li>결과 직접 수정</li>
-              <li>30초 안팎</li>
-            </ul>
+            <article class="start-card start-card-info start-card-privacy">
+              <span class="start-card-badge">Privacy</span>
+              <strong>사진은<br />저장하지 않아요</strong>
+              <small>분석 후 결과는 직접 수정할 수 있어요.</small>
+            </article>
           </div>
+
+          <p class="photo-availability-note" id="photo-availability-note">사진 분석을 사용할 수 없으면 직접 선택으로 같은 리포트를 만들 수 있어요.</p>
+
+          <nav class="start-floating-nav" aria-label="홈 빠른 실행">
+            <button class="start-nav-item is-active" type="button" aria-current="page">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9Z"/></svg>
+              <span>홈</span>
+            </button>
+            <button class="start-nav-item manual-start-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h9"/></svg>
+              <span>직접</span>
+            </button>
+            <button class="start-nav-item saved-inline-button" id="saved-report-inline-button" type="button" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7.5c0 5-8 10.5-8 10.5S4 12.5 4 7.5A4.2 4.2 0 0 1 12 5a4.2 4.2 0 0 1 8 2.5Z"/></svg>
+              <span>저장</span>
+            </button>
+            <button class="start-nav-add photo-start-button" type="button" data-pick-immediately="true" aria-label="사진으로 스타일 기준 찾기">+</button>
+          </nav>
         </section>
       </section>
 
@@ -401,7 +427,7 @@
         <div class="sheet-actions" id="sheet-actions"></div>
       </section>
     </div>
-    <script src="config.js"></script>
-    <script src="app.js"></script>
+    <script src="config.js?v=0.2.1"></script>
+    <script src="app.js?v=0.2.1"></script>
   </body>
 </html>
