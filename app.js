@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.2";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.3";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -426,10 +426,58 @@ function readSavedProfile() {
   }
 }
 
-function showScreen(name) {
-  screens.forEach((screen) => screen.classList.toggle("is-active", screen.dataset.screen === name));
-  window.scrollTo({ top: 0, behavior: "instant" });
+const SCREEN_KIND = { home: "base", result: "base", analysis: "flow", quiz: "flow" };
+const motionOK = !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+let activeFlow = null;
+let flowDismissTimer = 0;
+
+function syncHash(name) {
   history.replaceState(null, "", name === "home" ? "#home" : `#${name}`);
+}
+
+function setBase(name) {
+  screens.forEach((screen) => {
+    if (SCREEN_KIND[screen.dataset.screen] === "base") {
+      screen.classList.toggle("is-active", screen.dataset.screen === name);
+    }
+  });
+  window.scrollTo({ top: 0, behavior: "instant" });
+  syncHash(name);
+}
+
+function presentFlow(name) {
+  window.clearTimeout(flowDismissTimer);
+  activeFlow = name;
+  screens.forEach((screen) => {
+    if (SCREEN_KIND[screen.dataset.screen] === "flow") {
+      screen.classList.toggle("is-active", screen.dataset.screen === name);
+    }
+  });
+  document.body.classList.add("is-flow-open");
+  syncHash(name);
+  requestAnimationFrame(() => document.body.classList.add("is-flow-in"));
+}
+
+function dismissFlow({ to = "home" } = {}) {
+  const leaving = activeFlow;
+  if (to) setBase(to);
+  document.body.classList.remove("is-flow-in");
+  const finalize = () => {
+    if (leaving) document.querySelector(`[data-screen="${leaving}"]`)?.classList.remove("is-active");
+    activeFlow = null;
+    document.body.classList.remove("is-flow-open");
+  };
+  if (motionOK) flowDismissTimer = window.setTimeout(finalize, 320);
+  else finalize();
+}
+
+// Navigation contract: home/result are routed base screens; analysis/quiz are
+// presented as bottom-sheet flows over the hub. Completing a flow (showScreen
+// to a base while a flow is open) slides the sheet out and routes to that base.
+function showScreen(name) {
+  if (SCREEN_KIND[name] === "flow") return presentFlow(name);
+  if (activeFlow) return dismissFlow({ to: name });
+  setBase(name);
 }
 
 function showAnalysisStage(name) {
@@ -1298,6 +1346,35 @@ document.querySelectorAll(".photo-start-button").forEach((button) => {
   button.addEventListener("click", () => beginPhotoFlow({ pickImmediately: button.dataset.pickImmediately === "true" }));
 });
 document.querySelectorAll(".manual-start-button").forEach((button) => button.addEventListener("click", () => beginQuiz({ reset: true })));
+
+function openStartChooserSheet() {
+  openBottomSheet({
+    kicker: "새 스타일",
+    title: "어떻게 시작할까요?",
+    description: "사진으로 분석하거나, 직접 골라 같은 형식의 리포트를 만들 수 있어요.",
+    body: `
+      <div class="sheet-info-list">
+        <p><strong>사진 등록</strong><span>얼굴이 잘 보이는 사진 한 장으로 윤곽과 색감 단서를 읽어요.</span></p>
+        <p><strong>사진 없이 직접 선택</strong><span>닉네임, 얼굴형, 컬러, 무드만 골라도 같은 추천을 받아요.</span></p>
+      </div>
+    `,
+    actions: [
+      { label: "사진 등록", variant: "primary", handler: () => { closeBottomSheet({ restoreFocus: false }); beginPhotoFlow({ pickImmediately: true }); } },
+      { label: "사진 없이 직접 선택", handler: () => { closeBottomSheet({ restoreFocus: false }); beginQuiz({ reset: true }); } }
+    ]
+  });
+}
+document.querySelectorAll(".start-chooser-button").forEach((button) => button.addEventListener("click", openStartChooserSheet));
+document.querySelector(".brand")?.addEventListener("click", (event) => {
+  event.preventDefault();
+  showScreen("home");
+});
+
+[document.querySelector("#analysis-screen"), document.querySelector("#quiz-screen")].forEach((flow) => {
+  flow?.addEventListener("click", (event) => {
+    if (event.target === flow) dismissFlow({ to: "home" });
+  });
+});
 document.querySelector("#demo-photo-button").hidden = !demoMode;
 document.querySelector("#demo-photo-button").addEventListener("click", () => setSelectedPhoto(createDemoPhoto()));
 function openSavedReport() {
@@ -1457,8 +1534,11 @@ sheetActions?.addEventListener("click", async (event) => {
   }
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && bottomSheet && !bottomSheet.hidden) {
+  if (event.key !== "Escape") return;
+  if (bottomSheet && !bottomSheet.hidden) {
     closeBottomSheet();
+  } else if (activeFlow) {
+    dismissFlow({ to: "home" });
   }
 });
 
