@@ -2,5 +2,5 @@ window.MOI_CONFIG = {
   analysisEndpoint: "",
   photoAnalysisEnabled: false,
   demoMode: false,
-  appVersion: "0.2.3"
+  appVersion: "0.2.4"
 };

@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.3";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.4";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -177,6 +177,65 @@ const labels = {
   care: ["관리 주기", "스타일이 흐트러지기 전 관리 시점이에요"]
 };
 
+const curatedVisuals = {
+  face: {
+    oval: [{ id: "18367694", alt: "긴 레이어드 헤어가 자연스럽게 얼굴선을 감싸는 참고 사진", credit: "Pexels" }],
+    round: [{ id: "18367682", alt: "얼굴선을 길게 이어주는 롱 레이어드 헤어 참고 사진", credit: "Pexels" }],
+    square: [{ id: "30661046", alt: "부드러운 웨이브와 레이어로 윤곽을 완화한 헤어 참고 사진", credit: "Pexels" }],
+    long: [{ id: "15868761", alt: "옆 볼륨을 살린 미디엄 헤어 스타일 참고 사진", credit: "Pexels" }],
+    heart: [{ id: "15868761", alt: "턱선 주변 볼륨을 살린 보브 스타일 참고 사진", credit: "Pexels" }],
+    unknown: [{ id: "18367694", alt: "대부분의 얼굴형에 안정적인 소프트 레이어드 참고 사진", credit: "Pexels" }]
+  },
+  hairColor: {
+    spring: [{ id: "18367682", alt: "따뜻한 브라운 계열 헤어 컬러 참고 사진", credit: "Pexels" }],
+    summer: [{ id: "33744990", alt: "차분한 쿨 브라운 계열 헤어 컬러 참고 사진", credit: "Pexels" }],
+    autumn: [{ id: "15868761", alt: "깊은 브라운 계열 헤어 컬러 참고 사진", credit: "Pexels" }],
+    winter: [{ id: "30661046", alt: "다크 브라운과 블랙 계열 헤어 컬러 참고 사진", credit: "Pexels" }],
+    unknown: [{ id: "18367694", alt: "뉴트럴 브라운 헤어 컬러 참고 사진", credit: "Pexels" }]
+  },
+  beauty: {
+    spring: [{ id: "4938507", alt: "맑은 피치와 코랄 메이크업 제품 참고 사진", credit: "Pexels" }],
+    summer: [{ id: "6593792", alt: "부드러운 로즈와 모브 메이크업 팔레트 참고 사진", credit: "Pexels" }],
+    autumn: [{ id: "11883768", alt: "브릭과 브라운 계열 메이크업 제품 참고 사진", credit: "Pexels" }],
+    winter: [{ id: "7290708", alt: "선명한 레드 립 메이크업 참고 사진", credit: "Pexels" }],
+    unknown: [{ id: "4938507", alt: "뉴트럴 로즈 베이지 메이크업 참고 사진", credit: "Pexels" }]
+  },
+  nail: {
+    spring: [{ id: "16041438", alt: "밝고 깨끗한 네일 관리 참고 사진", credit: "Pexels" }],
+    summer: [{ id: "17471377", alt: "부드러운 그라데이션 네일 참고 사진", credit: "Pexels" }],
+    autumn: [{ id: "14267565", alt: "차분한 네일 케어 참고 사진", credit: "Pexels" }],
+    winter: [{ id: "4677851", alt: "정돈된 네일 트리트먼트 참고 사진", credit: "Pexels" }],
+    unknown: [{ id: "19239100", alt: "기본 매니큐어 관리 참고 사진", credit: "Pexels" }]
+  },
+  outfit: {
+    spring: [{ id: "9099444", alt: "아이보리 상의와 라이트 데님 무드의 착장 참고 사진", credit: "Pexels" }],
+    summer: [{ id: "9164745", alt: "라일락 계열 상의와 차분한 팬츠 착장 참고 사진", credit: "Pexels" }],
+    autumn: [{ id: "9968535", alt: "카멜과 크림 계열의 따뜻한 착장 참고 사진", credit: "Pexels" }],
+    winter: [{ id: "13900420", alt: "화이트 셔츠와 네이비 팬츠 무드의 착장 참고 사진", credit: "Pexels" }],
+    unknown: [{ id: "1006989", alt: "화이트 셔츠와 뉴트럴 팬츠 착장 참고 사진", credit: "Pexels" }]
+  },
+  mood: {
+    clean: [{ id: "17281873", alt: "정돈된 화이트 셔츠 중심의 클린 무드 참고 사진", credit: "Pexels" }],
+    lovely: [{ id: "12812231", alt: "부드러운 카디건 중심의 러블리 무드 참고 사진", credit: "Pexels" }],
+    chic: [{ id: "13900420", alt: "셔츠와 수트 팬츠의 시크한 무드 참고 사진", credit: "Pexels" }],
+    natural: [{ id: "12029974", alt: "편안한 카디건과 자연스러운 소재감 참고 사진", credit: "Pexels" }]
+  },
+  service: {
+    salon: [{ id: "30661046", alt: "헤어 살롱에서 스타일링을 받는 참고 사진", credit: "Pexels" }],
+    beautyShop: [{ id: "6593792", alt: "메이크업 팔레트와 뷰티 도구 참고 사진", credit: "Pexels" }],
+    shopping: [{ id: "17281873", alt: "화이트 셔츠가 걸린 의류 매장 참고 사진", credit: "Pexels" }],
+    caution: [{ id: "15221657", alt: "과하지 않은 뉴트럴 착장 참고 사진", credit: "Pexels" }]
+  },
+  care: {
+    haircut: [{ id: "30661046", alt: "미용실에서 커트를 준비하는 참고 사진", credit: "Pexels" }],
+    roots: [{ id: "15868761", alt: "염색과 헤어 컬러 상담을 떠올리는 참고 사진", credit: "Pexels" }],
+    treatment: [{ id: "18367694", alt: "정돈된 모발 관리 참고 사진", credit: "Pexels" }],
+    makeup: [{ id: "11883768", alt: "메이크업 제품 교체 주기 참고 사진", credit: "Pexels" }],
+    colorCheck: [{ id: "4938507", alt: "컬러 팔레트 점검을 떠올리는 메이크업 제품 참고 사진", credit: "Pexels" }],
+    nail: [{ id: "19239100", alt: "네일과 페디 관리 주기 참고 사진", credit: "Pexels" }]
+  }
+};
+
 const state = {
   name: "",
   area: "",
@@ -197,6 +256,7 @@ let loadingStepTimer = null;
 let sheetActionHandlers = new Map();
 let lastFocusedBeforeSheet = null;
 let sheetDrag = null;
+const visualGalleryRegistry = new Map();
 
 const splashScreen = document.querySelector("#splash-screen");
 const splashVersion = document.querySelector("#splash-version");
@@ -275,6 +335,80 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function pexelsImageUrl(id, { width = 900, height = 1100 } = {}) {
+  const photoId = encodeURIComponent(id);
+  return `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg?auto=compress&cs=tinysrgb&w=${width}&h=${height}&fit=crop`;
+}
+
+function getVisualGroup(group, key, fallback = "unknown") {
+  const collection = curatedVisuals[group] || {};
+  return collection[key] || collection[fallback] || [];
+}
+
+function registerVisualGallery(key, visuals) {
+  const normalized = Array.isArray(visuals) ? visuals.filter(Boolean) : [visuals].filter(Boolean);
+  visualGalleryRegistry.set(key, normalized);
+  return key;
+}
+
+function renderVisualFigure(key, visuals, {
+  className = "",
+  label = "참고 이미지",
+  eager = false,
+  width = 900,
+  height = 1100
+} = {}) {
+  const normalized = Array.isArray(visuals) ? visuals.filter(Boolean) : [visuals].filter(Boolean);
+  const [visual] = normalized;
+  if (!visual?.id) return "";
+  const galleryKey = registerVisualGallery(key, normalized);
+  const src = pexelsImageUrl(visual.id, { width, height });
+  const loading = eager ? "eager" : "lazy";
+  return `
+    <button class="visual-figure ${className}" type="button" data-visual-gallery="${escapeHtml(galleryKey)}" aria-label="${escapeHtml(label)} 참고 이미지 보기">
+      <img src="${src}" alt="${escapeHtml(visual.alt || label)}" width="${width}" height="${height}" loading="${loading}" decoding="async" />
+      <span class="visual-figure-label">${escapeHtml(label)}</span>
+    </button>
+  `;
+}
+
+function renderSummaryVisuals(key, visuals, label) {
+  const normalized = Array.isArray(visuals) ? visuals.filter(Boolean) : [visuals].filter(Boolean);
+  if (!normalized.length) return "";
+  const galleryKey = registerVisualGallery(key, normalized);
+  return `
+    <button class="summary-visual-strip" type="button" data-visual-gallery="${escapeHtml(galleryKey)}" aria-label="${escapeHtml(label)} 참고 이미지 보기">
+      ${normalized.slice(0, 3).map((visual, index) => `
+        <img src="${pexelsImageUrl(visual.id, { width: 360, height: 420 })}" alt="${escapeHtml(visual.alt || label)}" width="360" height="420" loading="${index === 0 ? "eager" : "lazy"}" decoding="async" />
+      `).join("")}
+    </button>
+  `;
+}
+
+function openVisualGallery(key) {
+  const visuals = visualGalleryRegistry.get(key);
+  if (!visuals?.length) return;
+  openBottomSheet({
+    kicker: "참고 이미지",
+    title: "이런 느낌으로 보면 좋아요.",
+    description: "사진은 추천을 이해하기 위한 무드 레퍼런스예요. 같은 스타일을 그대로 따라 하기보다, 실루엣과 색감의 방향만 참고해 주세요.",
+    detent: "large",
+    body: `
+      <div class="visual-gallery-grid">
+        ${visuals.map((visual) => `
+          <figure class="visual-gallery-card">
+            <img src="${pexelsImageUrl(visual.id, { width: 900, height: 1100 })}" alt="${escapeHtml(visual.alt || "스타일 참고 이미지")}" width="900" height="1100" loading="lazy" decoding="async" />
+            <figcaption>${escapeHtml(visual.alt || "스타일 참고 이미지")}<span>${escapeHtml(visual.credit || "Reference")}</span></figcaption>
+          </figure>
+        `).join("")}
+      </div>
+    `,
+    actions: [
+      { label: "닫기", handler: () => closeBottomSheet() }
+    ]
+  });
 }
 
 function normalizeAnalysisChoice(value, choices) {
@@ -915,11 +1049,16 @@ function renderResultSummary() {
   const mood = moods[state.mood];
   const faceNote = face.isUnknown ? "얼굴형을 특정하지 않은 범용 추천" : face.label;
   const colorNote = color.isUnknown ? "무난한 뉴트럴 팔레트" : color.label;
+  const faceVisuals = getVisualGroup("face", state.faceShape);
+  const beautyVisuals = getVisualGroup("beauty", state.personalColor);
+  const outfitVisuals = getVisualGroup("outfit", state.personalColor);
+  const moodVisuals = getVisualGroup("mood", state.mood, "natural");
   resultSummaryGrid.innerHTML = `
     <article class="summary-card">
       <span class="summary-label">내 기준</span>
       <h2>${faceNote}</h2>
       <p>${colorNote} · ${mood.label}</p>
+      ${renderSummaryVisuals("summary-profile", [faceVisuals[0], beautyVisuals[0], moodVisuals[0]], "내 기준")}
     </article>
     <article class="summary-card emphasis">
       <span class="summary-label">오늘 바로 하기</span>
@@ -928,6 +1067,7 @@ function renderResultSummary() {
         <li><strong>메이크업</strong><span>${color.lip[0]} + ${color.shadow[0]}</span></li>
         <li><strong>옷</strong><span>${color.outfit}</span></li>
       </ul>
+      ${renderSummaryVisuals("summary-action", [faceVisuals[0], beautyVisuals[0], outfitVisuals[0]], "오늘 바로 하기")}
     </article>
     <article class="summary-card caution">
       <span class="summary-label">피하면 좋은 것</span>
@@ -935,6 +1075,7 @@ function renderResultSummary() {
         <li><strong>컬러</strong><span>${color.avoid}</span></li>
         <li><strong>헤어</strong><span>${face.avoid}</span></li>
       </ul>
+      ${renderSummaryVisuals("summary-caution", [curatedVisuals.service.caution[0]], "피하면 좋은 것")}
     </article>
   `;
 }
@@ -1030,6 +1171,9 @@ function renderToday() {
   const color = personalColors[state.personalColor] || personalColors.unknown;
   const mood = moods[state.mood];
   const area = areaLabel();
+  const faceVisuals = getVisualGroup("face", state.faceShape);
+  const beautyVisuals = getVisualGroup("beauty", state.personalColor);
+  const outfitVisuals = getVisualGroup("outfit", state.personalColor);
   return `${renderHeading("today")}
     <article class="today-lead">
       <div class="today-lead-copy">
@@ -1037,22 +1181,27 @@ function renderToday() {
         <h3>${color.outfit}</h3>
         <p>${color.summary} 오늘은 ${mood.accent}에 집중해 보세요.</p>
       </div>
-      <div class="today-look" aria-hidden="true"></div>
+      <div class="today-look today-look-photo">
+        ${renderVisualFigure("today-outfit", outfitVisuals, { className: "today-visual", label: "오늘의 착장", eager: true, width: 900, height: 1100 })}
+      </div>
     </article>
     <div class="recommendation-grid">
-      <article class="recommendation-card">
+      <article class="recommendation-card has-visual">
+        ${renderVisualFigure("today-hair", faceVisuals, { className: "recommendation-visual", label: "헤어 참고" })}
         <div class="card-topline"><span class="card-icon">⌁</span><span class="card-label">HAIR</span></div>
         <h3>${face.hair}</h3>
         <p>${face.tip}</p>
         <div class="chip-row"><span class="chip">${color.hairColor}</span><span class="chip">${face.fringe}</span></div>
       </article>
-      <article class="recommendation-card">
+      <article class="recommendation-card has-visual">
+        ${renderVisualFigure("today-beauty", beautyVisuals, { className: "recommendation-visual", label: "메이크업 참고" })}
         <div class="card-topline"><span class="card-icon">◒</span><span class="card-label">BEAUTY</span></div>
         <h3>${color.lip[0]} 포인트</h3>
         <p>${mood.makeup} 조합으로 전체 인상을 연결해 보세요.</p>
         <div class="chip-row"><span class="chip">${color.brow[0]}</span><span class="chip">${color.shadow[0]}</span></div>
       </article>
-      <article class="recommendation-card full">
+      <article class="recommendation-card full has-visual">
+        ${renderVisualFigure("today-nearby", curatedVisuals.service.salon, { className: "recommendation-visual wide", label: "주변 숍 참고" })}
         <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">${area ? `NEAR ${area.toUpperCase()}` : "NEARBY"}</span></div>
         <h3>내 스타일을 잘 아는 가까운 숍</h3>
         <p>${area ? `${area} 주변의` : "활동 지역을 설정하면"} 퍼스널컬러 전문 헤어·메이크업 숍을 지도에서 바로 살펴볼 수 있어요.</p>
@@ -1065,9 +1214,12 @@ function renderHair() {
   const face = faceShapes[state.faceShape] || faceShapes.unknown;
   const color = personalColors[state.personalColor] || personalColors.unknown;
   const area = areaLabel();
+  const faceVisuals = getVisualGroup("face", state.faceShape);
+  const hairColorVisuals = getVisualGroup("hairColor", state.personalColor);
   return `${renderHeading("hair")}
     <div class="recommendation-grid">
-      <article class="recommendation-card full">
+      <article class="recommendation-card full has-visual">
+        ${renderVisualFigure("hair-cut", faceVisuals, { className: "recommendation-visual wide", label: "추천 컷 참고", eager: true })}
         <div class="card-topline"><span class="card-icon">⌁</span><span class="card-label">BEST CUT</span></div>
         <h3>${face.hair}</h3>
         <p>${face.tip}</p>
@@ -1077,13 +1229,15 @@ function renderHair() {
           <li><span>미용실에서</span><strong>“얼굴선을 따라 가볍게 연결되는 레이어를 살려주세요.”</strong></li>
         </ul>
       </article>
-      <article class="recommendation-card">
+      <article class="recommendation-card has-visual">
+        ${renderVisualFigure("hair-color", hairColorVisuals, { className: "recommendation-visual", label: "헤어 컬러 참고" })}
         <div class="card-topline"><span class="card-icon">●</span><span class="card-label">COLOR</span></div>
         <h3>${color.hairColor}</h3>
         <p>${color.label}의 피부 온도와 자연스럽게 어우러지면서 인상을 환하게 만드는 컬러예요.</p>
         <div class="chip-row">${color.hairAlt.map((item) => `<span class="chip">${item}</span>`).join("")}</div>
       </article>
-      <article class="recommendation-card">
+      <article class="recommendation-card has-visual">
+        ${renderVisualFigure("hair-salon", curatedVisuals.service.salon, { className: "recommendation-visual", label: "헤어숍 참고" })}
         <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">SALON</span></div>
         <h3>${area ? `${area} 헤어숍 찾기` : "헤어숍 찾기"}</h3>
         <p>상담 전 이 리포트의 헤어스타일과 컬러 이름을 함께 보여주면 더 정확해요.</p>
@@ -1100,9 +1254,12 @@ function renderBeauty() {
   const color = personalColors[state.personalColor] || personalColors.unknown;
   const mood = moods[state.mood];
   const area = areaLabel();
+  const beautyVisuals = getVisualGroup("beauty", state.personalColor);
+  const nailVisuals = getVisualGroup("nail", state.personalColor);
   return `${renderHeading("beauty")}
     <div class="recommendation-grid">
-      <article class="recommendation-card full">
+      <article class="recommendation-card full has-visual">
+        ${renderVisualFigure("beauty-palette", [beautyVisuals[0], nailVisuals[0]], { className: "recommendation-visual wide", label: "뷰티 팔레트 참고", eager: true })}
         <div class="card-topline"><span class="card-icon">◒</span><span class="card-label">MY PALETTE</span></div>
         <h3>${color.label} × ${mood.label}</h3>
         <p>${mood.makeup}이 오늘의 핵심이에요.</p>
@@ -1114,13 +1271,15 @@ function renderBeauty() {
           ${beautyRow("네일", color.nail)}
         </ul>
       </article>
-      <article class="recommendation-card">
+      <article class="recommendation-card has-visual">
+        ${renderVisualFigure("beauty-shopping", beautyVisuals, { className: "recommendation-visual", label: "제품 참고" })}
         <div class="card-topline"><span class="card-icon">＋</span><span class="card-label">SHOPPING</span></div>
         <h3>내 컬러 제품 모아보기</h3>
         <p>색상명으로 여러 브랜드의 제품을 비교해 보세요. 발색은 피부색과 화면에 따라 달라질 수 있어요.</p>
         <a class="action-link" href="${searchLink(`${color.label} ${color.lip[0]} 립`)}" target="_blank" rel="noreferrer">추천 립 검색 ${arrowIcon()}</a>
       </article>
-      <article class="recommendation-card">
+      <article class="recommendation-card has-visual">
+        ${renderVisualFigure("beauty-shop", [curatedVisuals.service.beautyShop[0], nailVisuals[0]], { className: "recommendation-visual", label: "뷰티숍 참고" })}
         <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">BEAUTY SHOP</span></div>
         <h3>뷰티 전문가 만나기</h3>
         <p>중요한 날이라면 ${area ? `${area} 주변` : "활동 지역 주변"} 메이크업·네일숍에서 내 팔레트로 상담해 보세요.</p>
@@ -1132,6 +1291,8 @@ function renderBeauty() {
 function renderWear() {
   const color = personalColors[state.personalColor] || personalColors.unknown;
   const mood = moods[state.mood];
+  const outfitVisuals = getVisualGroup("outfit", state.personalColor);
+  const moodVisuals = getVisualGroup("mood", state.mood, "natural");
   return `${renderHeading("wear")}
     <article class="today-lead">
       <div class="today-lead-copy">
@@ -1139,21 +1300,26 @@ function renderWear() {
         <h3>${color.outfit}</h3>
         <p>${mood.piece}를 중심으로 ${mood.detail}을 더해 ${mood.label} 무드를 완성해 보세요.</p>
       </div>
-      <div class="today-look" aria-hidden="true"></div>
+      <div class="today-look today-look-photo">
+        ${renderVisualFigure("wear-look", outfitVisuals, { className: "today-visual", label: "오늘의 옷", eager: true, width: 900, height: 1100 })}
+      </div>
     </article>
     <div class="recommendation-grid">
-      <article class="recommendation-card">
+      <article class="recommendation-card has-visual">
+        ${renderVisualFigure("wear-best-colors", moodVisuals, { className: "recommendation-visual", label: "베스트 컬러 참고" })}
         <div class="card-topline"><span class="card-icon">◇</span><span class="card-label">BEST COLORS</span></div>
         <h3>${color.best.join(" · ")}</h3>
         <p>상의, 스카프처럼 얼굴 가까이에 배치하면 가장 효과적이에요.</p>
         <div class="chip-row">${color.palette.map((hex, index) => `<span class="chip color-swatch-line"><i style="background:${hex}"></i>${color.best[index] ?? "포인트"}</span>`).join("")}</div>
       </article>
-      <article class="recommendation-card">
+      <article class="recommendation-card has-visual">
+        ${renderVisualFigure("wear-caution", curatedVisuals.service.caution, { className: "recommendation-visual", label: "피할 조합 참고" })}
         <div class="card-topline"><span class="card-icon">×</span><span class="card-label">SKIP TODAY</span></div>
         <h3>이 조합은 잠시 쉬기</h3>
         <p>${color.avoid}. 입어야 한다면 얼굴에서 멀리 두고 베스트 컬러를 액세서리로 보완하세요.</p>
       </article>
-      <article class="recommendation-card full">
+      <article class="recommendation-card full has-visual">
+        ${renderVisualFigure("wear-shopping", [outfitVisuals[0], curatedVisuals.service.shopping[0]], { className: "recommendation-visual wide", label: "비슷한 옷 참고" })}
         <div class="card-topline"><span class="card-icon">＋</span><span class="card-label">FIND THE LOOK</span></div>
         <h3>오늘의 착장 쇼핑하기</h3>
         <p>추천은 특정 판매처의 광고가 아닌 스타일 검색 링크예요. 소재와 핏을 꼭 함께 확인하세요.</p>
@@ -1162,19 +1328,31 @@ function renderWear() {
     </div>`;
 }
 
+function renderCareItem(key, number, title, description, badge) {
+  return `
+    <div class="schedule-item has-visual">
+      ${renderVisualFigure(`care-${key}`, curatedVisuals.care[key], { className: "schedule-visual", label: title, width: 520, height: 520 })}
+      <span class="schedule-number">${number}</span>
+      <div><h3>${title}</h3><p>${description}</p></div>
+      <span class="schedule-badge">${badge}</span>
+    </div>
+  `;
+}
+
 function renderCare() {
   return `${renderHeading("care")}
-    <article class="recommendation-card full">
+    <article class="recommendation-card full has-visual">
+      ${renderVisualFigure("care-overview", [curatedVisuals.care.haircut[0], curatedVisuals.care.makeup[0], curatedVisuals.care.nail[0]], { className: "recommendation-visual wide", label: "관리 주기 참고", eager: true })}
       <div class="card-topline"><span class="card-icon">↻</span><span class="card-label">CARE CYCLE</span></div>
       <h3>잊기 쉬운 관리 주기</h3>
       <p>개인의 모발 성장 속도와 제품 사용 기간에 맞춰 조금씩 조정해 주세요.</p>
       <div class="schedule-list">
-        <div class="schedule-item"><span class="schedule-number">01</span><div><h3>헤어 커트</h3><p>실루엣과 끝선이 무거워지기 전에 정리</p></div><span class="schedule-badge">6–8주</span></div>
-        <div class="schedule-item"><span class="schedule-number">02</span><div><h3>뿌리 염색</h3><p>전체 염색보다 손상을 줄이는 리터치 중심</p></div><span class="schedule-badge">4–6주</span></div>
-        <div class="schedule-item"><span class="schedule-number">03</span><div><h3>펌 또는 클리닉</h3><p>컬이 느슨해지고 모발 끝이 건조해질 때</p></div><span class="schedule-badge">3–4개월</span></div>
-        <div class="schedule-item"><span class="schedule-number">04</span><div><h3>메이크업 제품</h3><p>냄새와 제형이 변했다면 기간 전이라도 교체</p></div><span class="schedule-badge">개봉 후 6–12개월</span></div>
-        <div class="schedule-item"><span class="schedule-number">05</span><div><h3>퍼스널 컬러 점검</h3><p>헤어 컬러나 피부 톤 변화가 클 때 다시 확인</p></div><span class="schedule-badge">필요할 때</span></div>
-        <div class="schedule-item"><span class="schedule-number">06</span><div><h3>네일 · 페디</h3><p>들뜸이나 갈라짐이 생기기 전에 제거하고 휴식</p></div><span class="schedule-badge">네일 2–3주 · 페디 4–6주</span></div>
+        ${renderCareItem("haircut", "01", "헤어 커트", "실루엣과 끝선이 무거워지기 전에 정리", "6–8주")}
+        ${renderCareItem("roots", "02", "뿌리 염색", "전체 염색보다 손상을 줄이는 리터치 중심", "4–6주")}
+        ${renderCareItem("treatment", "03", "펌 또는 클리닉", "컬이 느슨해지고 모발 끝이 건조해질 때", "3–4개월")}
+        ${renderCareItem("makeup", "04", "메이크업 제품", "냄새와 제형이 변했다면 기간 전이라도 교체", "개봉 후 6–12개월")}
+        ${renderCareItem("colorCheck", "05", "퍼스널 컬러 점검", "헤어 컬러나 피부 톤 변화가 클 때 다시 확인", "필요할 때")}
+        ${renderCareItem("nail", "06", "네일 · 페디", "들뜸이나 갈라짐이 생기기 전에 제거하고 휴식", "네일 2–3주 · 페디 4–6주")}
       </div>
     </article>`;
 }
@@ -1493,6 +1671,12 @@ document.querySelector(".category-tabs").addEventListener("click", (event) => {
   if (!tab) return;
   updateCategoryTabs(tab.dataset.category);
   renderCategory(tab.dataset.category);
+});
+
+document.addEventListener("click", (event) => {
+  const visualButton = event.target.closest("[data-visual-gallery]");
+  if (!visualButton) return;
+  openVisualGallery(visualButton.dataset.visualGallery);
 });
 
 recommendationContent.addEventListener("click", (event) => {

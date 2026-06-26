@@ -953,3 +953,43 @@
 - 남은 일:
   - 사용자가 지시하면 커밋/푸시 후 Pages 배포.
   - (후속 권장) 사진 분석 large-detent 시트의 로딩/촬영 단계 높이 미세 조정, 결과 화면도 앱 캔버스 폭으로 맞추는 정리.
+
+## 2026-06-26 KST — v0.2.4 결과 화면 이미지 레퍼런스 시스템
+
+- 요청: 결과 화면에 추천 글만 나열하지 않고 헤어, 의상, 메이크업 등 결과 화면에 출력되는 모든 항목/유형에 사진을 함께 보여주도록 즉시 진행.
+- 버전:
+  - `0.2.3` → `0.2.4`
+- 리서치/판단:
+  - 외부 이미지 API를 즉시 붙이면 키/서버/라이선스/품질/속도 리스크가 커서 1차는 "정적 큐레이션 이미지 매핑"으로 결정.
+  - 결과 화면의 멘탈모델은 커머스 피드가 아니라 개인 스타일 리포트이므로, 이미지가 추천 문장을 압도하지 않도록 compact thumbnail + tap-to-sheet gallery로 설계.
+  - Pexels CDN 이미지 URL을 일부 실제 요청해 200 응답 확인 후 사용.
+- 조치:
+  - `app.js`에 `curatedVisuals` registry 추가:
+    - 얼굴형별 헤어 이미지(`oval`, `round`, `square`, `long`, `heart`, `unknown`)
+    - 퍼스널컬러별 헤어컬러/뷰티/네일/의상 이미지(`spring`, `summer`, `autumn`, `winter`, `unknown`)
+    - 무드별 의상 이미지(`clean`, `lovely`, `chic`, `natural`)
+    - 숍/쇼핑/주의/관리 주기 이미지
+  - `renderVisualFigure`, `renderSummaryVisuals`, `openVisualGallery` 공통 유틸 추가.
+  - 결과 요약 카드 3개에 이미지 스트립 추가.
+  - `오늘`, `헤어`, `뷰티`, `옷`, `관리` 탭의 모든 추천 카드/관리 항목에 대표 이미지 추가.
+  - 이미지 클릭 시 바텀시트 갤러리로 크게 확인 가능하도록 전역 `[data-visual-gallery]` click 처리 추가.
+  - `styles.css`에 v0.2.4 visual recommendation system 추가:
+    - 카드 이미지 크롭, label overlay, focus-visible, reduced-motion, 모바일 높이 조정.
+    - 관리 주기 리스트는 각 항목별 정사각 썸네일로 재구성.
+  - `DESIGN.md`에 Result Visuals 규칙 추가.
+- 파일:
+  - `DESIGN.md`, `WORKLOG.md`, `app.js`, `config.js`, `index.html`, `package.json`, `styles.css`
+- 검증:
+  - `git diff --check` 통과.
+  - `npm run check` 통과(`Version verified: 0.2.4`).
+  - `npm run verify` 통과(`Configured app version: 0.2.4`, Worker contract verified, build OK). 테스트 중 OpenAI quota 429는 기존 계약 검증 케이스로 처리됨.
+  - 로컬 `npm run dev:photo` 재시작 후 확인:
+    - `/config.js`가 `appVersion: "0.2.4"` 반환.
+    - 저장된 스타일로 결과 화면 진입 성공.
+    - 결과 첫 화면: 요약 이미지 스트립 3개, 오늘 탭 이미지 4개 확인.
+    - 탭별 이미지 수: 헤어 3개, 뷰티 3개, 옷 4개, 관리 7개(관리 주기 6개 포함).
+    - 이미지 클릭 시 바텀시트 갤러리 정상 오픈, 갤러리 카드 3개 확인.
+    - 외부 Pexels 이미지 17/17 로드, 깨진 외부 이미지 0개, 브라우저 콘솔 error 0개.
+  - Impeccable detector:
+    - 기존 레거시 CSS advisory는 남아 있음.
+    - 새 v0.2.4 visual block(`styles.css` 3992 이후)은 advisory 0개 확인.
