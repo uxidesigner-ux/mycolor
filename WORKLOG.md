@@ -886,3 +886,37 @@
 - 커밋/푸시:
   - 대상 브랜치: `main`
   - 커밋 메시지: `feat: rework home into app-style layout`
+
+## 2026-06-26 KST — v0.2.2 Liquid Glass chrome 적용
+
+- 요청: RoutDiary 참고로 홈 화면을 동일 레이아웃(반응형이되 앱스럽게)으로 구성하고, 내비바·헤더·기능성 버튼류에 동일한 "리퀴드 글라스" UI 스타일 적용.
+- 버전:
+  - `0.2.1` → `0.2.2`
+- 디자인 방향 전환:
+  - 기존 `DESIGN.md`의 "글래스모피즘 금지" 규칙과 충돌하므로, chrome 한정 Liquid Glass 표면을 공식 디자인 시스템으로 채택하고 문서를 갱신함.
+- 조치:
+  - `styles.css` 끝에 토큰 기반 `--glass-*` 레이어를 cascade로 추가(기존 버전별 override 패턴과 동일).
+  - 적용 대상: 홈 sticky 앱바, 하단 floating 내비, 모드 칩(필터 pill), 원형 아이콘 버튼, 정보 카드(frosted), 카드 badge, 내부 화면 공유 헤더(`site-header` sticky glass), `header-link`, `secondary-button`, `primary-button`(gloss), 바텀시트 패널, `sheet-close`.
+  - 표면: `rgba(255,255,255,.6~.82)` tint + `backdrop-filter: blur(22~30px) saturate(180~200%)` + `-webkit-` 동반, 흰 hairline border, 상단 inset highlight.
+  - glass 굴절을 살리기 위해 홈 캔버스/데스크톱 양옆에 아주 옅은 ambient tint(블루·웜 6~12% alpha) 배경 추가. 전체 톤은 화이트 클린 유지.
+  - 강조(활성 칩, primary CTA, 중앙 FAB)는 ink accent + gloss로 유지해 glass 위 대비 anchor 역할.
+  - RoutDiary 헤더의 버전 표기 대응으로 홈 앱바에 glass 버전 pill 추가(`#start-version`, `app.js`가 `APP_VERSION`으로 채움).
+  - 접근성 폴백: `@supports not (backdrop-filter)` 및 `prefers-reduced-transparency: reduce`에서 불투명 흰 surface로 처리.
+  - `styles.css`/`config.js`/`app.js` 로드 query를 `?v=0.2.2`로 갱신, 스플래시/`package.json`/`config.js`/`app.js` 버전 동기화.
+- 파일:
+  - `.gitignore` (로컬 `.claude/` 미리보기 설정 제외)
+  - `DESIGN.md`
+  - `WORKLOG.md`
+  - `app.js`
+  - `config.js`
+  - `index.html`
+  - `package.json`
+  - `styles.css`
+- 검증:
+  - `git diff --check` 통과.
+  - `npm run verify` 통과, `Configured app version: 0.2.2`, `Worker analysis contract verified`, build OK.
+  - 로컬 `npm run dev:photo` 미리보기 캡처 확인:
+    - 모바일 375px: 글라스 앱바 + `v0.2.2` pill, 글라스 모드 칩, frosted 정보 카드, 하단 글라스 내비 + FAB 정상 렌더. 상단 ambient tint로 투명감 확인.
+    - 데스크톱: 모바일 앱 캔버스 중앙 정렬 + 양옆 ambient 배경, 글라스 chrome 일관 적용 확인.
+- 남은 일:
+  - 사용자가 지시하면 커밋/푸시 후 Pages 배포(직전 v0.2.1 배포에 이어짐).

@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.1";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.2";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -200,6 +200,7 @@ let sheetDrag = null;
 
 const splashScreen = document.querySelector("#splash-screen");
 const splashVersion = document.querySelector("#splash-version");
+const startVersion = document.querySelector("#start-version");
 const screens = [...document.querySelectorAll("[data-screen]")];
 const steps = [...document.querySelectorAll(".quiz-step")];
 const nextButton = document.querySelector("#quiz-next");
@@ -254,6 +255,7 @@ function hideSplash() {
 
 function scheduleSplashDismiss() {
   if (splashVersion) splashVersion.textContent = `v${APP_VERSION}`;
+  if (startVersion) startVersion.textContent = `v${APP_VERSION}`;
   if (!splashScreen) {
     document.body.classList.remove("is-splashing");
     return;

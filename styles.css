@@ -3613,3 +3613,229 @@ button.start-card {
     height: 58px;
   }
 }
+
+/* ============================================================
+   Liquid Glass surface system — v0.2.2
+   RoutDiary 참고 앱 레이아웃 + 반투명 "리퀴드 글라스" chrome.
+   헤더 · 하단 내비 · 모드 칩 · 아이콘/보조 버튼 · 바텀시트에 일관 적용.
+   토큰 기반으로 끝에 cascade로 얹어 기존 규칙 위에서 우선 적용한다.
+   ============================================================ */
+:root {
+  --glass-tint: rgba(255, 255, 255, 0.6);
+  --glass-tint-strong: rgba(255, 255, 255, 0.82);
+  --glass-tint-soft: rgba(255, 255, 255, 0.44);
+  --glass-stroke: rgba(255, 255, 255, 0.7);
+  --glass-hairline: rgba(17, 17, 17, 0.07);
+  --glass-blur: blur(22px) saturate(180%);
+  --glass-blur-strong: blur(30px) saturate(200%);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --glass-shadow: 0 12px 32px -14px rgba(17, 17, 17, 0.32), var(--glass-highlight);
+}
+
+/* Ambient field — glass 가 굴절할 옅은 색을 깔아 투명감을 살린다(전체 톤은 클린 유지). */
+body:has(#home-screen.is-active) {
+  background:
+    radial-gradient(60% 48% at 0% 0%, rgba(120, 150, 255, 0.06), transparent 60%),
+    radial-gradient(60% 48% at 100% 100%, rgba(255, 160, 140, 0.05), transparent 60%),
+    #f3f4f7;
+}
+
+.start-mobile-app {
+  background:
+    radial-gradient(120% 56% at 6% -8%, rgba(120, 150, 255, 0.12), transparent 58%),
+    radial-gradient(116% 52% at 102% 2%, rgba(255, 168, 150, 0.1), transparent 54%),
+    radial-gradient(150% 70% at 50% 112%, rgba(150, 200, 255, 0.12), transparent 60%),
+    #fbfbfd;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* Home app bar — sticky glass */
+.start-appbar {
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  border-bottom: 1px solid var(--glass-hairline);
+  box-shadow: var(--glass-highlight);
+}
+
+/* 버전 pill — RoutDiary 헤더의 버전 표기 대응 */
+.start-version {
+  align-self: center;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-tint-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--glass-shadow);
+  color: var(--muted-strong);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* 원형 아이콘 버튼 — glass */
+.start-icon-button,
+.icon-button {
+  background: var(--glass-tint-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--glass-shadow);
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.start-icon-button:hover,
+.icon-button:hover {
+  background: var(--glass-tint-strong);
+  box-shadow: 0 16px 34px -14px rgba(17, 17, 17, 0.4), var(--glass-highlight);
+}
+
+/* 모드 칩(필터 pill) — 비활성은 glass, 활성은 ink accent + gloss */
+.start-mode-chip {
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--glass-highlight);
+  color: var(--ink);
+}
+
+.start-mode-chip.is-active {
+  background: linear-gradient(180deg, #2c2c2c, var(--ink));
+  border-color: rgba(17, 17, 17, 0.9);
+  box-shadow: 0 8px 18px -8px rgba(17, 17, 17, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  color: var(--white);
+}
+
+.start-mode-chip.is-muted {
+  background: var(--glass-tint-soft);
+  color: var(--muted-strong);
+}
+
+/* 정보 카드 — frosted glass (강조 photo/action 카드는 accent 로 유지) */
+.start-card-info,
+.start-card-privacy {
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--glass-shadow);
+}
+
+.start-card-info::before,
+.start-card-privacy::before {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.start-card-badge {
+  background: var(--glass-tint-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--glass-highlight);
+}
+
+/* 하단 floating 내비 — glass pill bar */
+.start-floating-nav {
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: 0 18px 40px -16px rgba(17, 17, 17, 0.38), var(--glass-highlight);
+}
+
+.start-nav-item.is-active {
+  background: var(--glass-tint-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 4px 12px -6px rgba(17, 17, 17, 0.28);
+  color: var(--ink);
+}
+
+/* 중앙 액션(FAB) — accent 유지하되 glossy */
+.start-nav-add {
+  background: linear-gradient(180deg, #2c2c2c 0%, var(--ink) 100%);
+  box-shadow: 0 12px 26px -8px rgba(17, 17, 17, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+/* 공유 헤더(내부 화면) — sticky glass bar */
+.site-header {
+  position: sticky;
+  top: 0;
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  border-bottom: 1px solid var(--glass-hairline);
+}
+
+.header-link {
+  padding: 9px 14px;
+  border: 1px solid var(--glass-stroke);
+  border-radius: var(--radius-pill);
+  background: var(--glass-tint-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+}
+
+/* 기능성 버튼 — secondary 는 glass, primary 는 ink + 상단 gloss */
+.secondary-button {
+  border: 1px solid var(--glass-stroke);
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+}
+
+.secondary-button:hover {
+  background: var(--glass-tint-strong);
+  color: var(--ink);
+}
+
+.primary-button,
+.hero-primary-action {
+  box-shadow: 0 14px 30px -12px rgba(17, 17, 17, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+/* 바텀시트 — glass panel */
+.bottom-sheet-panel {
+  background: var(--glass-tint-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  border-top: 1px solid var(--glass-stroke);
+  box-shadow: 0 -18px 50px -20px rgba(17, 17, 17, 0.4), var(--glass-highlight);
+}
+
+.sheet-close {
+  background: var(--glass-tint-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-stroke);
+  box-shadow: var(--glass-highlight);
+}
+
+/* backdrop-filter 미지원 브라우저 — 불투명 surface 로 폴백해 가독성 보존 */
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .start-appbar,
+  .start-floating-nav,
+  .site-header,
+  .bottom-sheet-panel { background: rgba(255, 255, 255, 0.97); }
+
+  .start-mode-chip,
+  .start-card-info,
+  .start-card-privacy,
+  .secondary-button,
+  .header-link,
+  .start-icon-button,
+  .icon-button,
+  .start-version,
+  .sheet-close { background: var(--white); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .start-appbar,
+  .start-floating-nav,
+  .site-header,
+  .bottom-sheet-panel { background: rgba(255, 255, 255, 0.98); }
+}

@@ -58,7 +58,7 @@ components:
     rounded: "{rounded.md}"
 ---
 
-# Design System: MOI v0.2.1
+# Design System: MOI v0.2.2
 
 ## 1. Overview
 
@@ -155,6 +155,17 @@ MOI의 제품 UI는 화이트/그레이/블랙 중심이다.
 - 긴 설명이나 판단 근거는 토스트가 아니라 카드 내부 안내문으로 제공한다.
 - 모바일 토스트는 화면 중앙을 가리지 않고 하단 safe-area 위에 짧게 표시한다.
 
+### Liquid Glass Chrome
+
+v0.2.2부터 chrome(헤더, 하단 floating 내비, 모드 칩, 아이콘/보조 버튼, 바텀시트)은 iOS 26 스타일의 반투명 "Liquid Glass" 표면을 쓴다.
+
+- 표면은 `rgba(255,255,255,0.6~0.82)` tint에 `backdrop-filter: blur(22~30px) saturate(180~200%)`를 더해 뒤 콘텐츠를 흐리게 비춘다. `-webkit-backdrop-filter`를 항상 함께 둔다.
+- 경계는 흰 hairline(`rgba(255,255,255,0.7)`)과 상단 inset highlight(`inset 0 1px 0 rgba(255,255,255,0.72)`)로 유리의 specular edge를 만든다.
+- glass 가 굴절할 수 있도록 홈 캔버스 배경에 아주 옅은 ambient tint(블루/웜 6~12% alpha)를 깐다. 전체 톤은 여전히 화이트 기반 클린.
+- 강조(현재 선택, primary CTA, 중앙 FAB)는 ink 한 색으로 유지하되 상단 gloss highlight만 더한다. glass 위에서 대비를 만드는 anchor 역할.
+- glass 토큰은 `styles.css`의 `--glass-*` 변수로 관리한다. literal 값을 새로 흩뿌리지 않는다.
+- `backdrop-filter` 미지원 또는 `prefers-reduced-transparency: reduce`에서는 불투명 흰 surface로 폴백해 가독성을 보장한다.
+
 ### Bottom Sheets / iOS-like Motion
 
 - 안내, 확인, 공유, 지역 입력처럼 현재 화면 맥락에서 끝나는 작업은 새 화면보다 바텀시트를 우선한다.
@@ -176,5 +187,5 @@ MOI의 제품 UI는 화이트/그레이/블랙 중심이다.
 
 - 코랄/붉은 배경을 UI 포인트로 쓰지 않는다.
 - 세리프 디스플레이 타입으로 감성 랜딩처럼 보이게 하지 않는다.
-- 큰 그림자, 글래스모피즘, 장식용 일러스트를 쓰지 않는다.
+- glass는 chrome(헤더/내비/칩/버튼/시트)에만 쓰고, 콘텐츠 가독성을 해치는 진한 색 유리나 과한 그림자·장식 일러스트로 번지지 않게 한다.
 - 병원/관공서처럼 차갑고 규정적인 톤으로 가지 않는다.
