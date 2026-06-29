@@ -4803,3 +4803,36 @@ body:has(#home-screen.is-active) .device-frame > .site-header { display: flex; }
   font-size: 16px;
 }
 .route-field input:disabled { opacity: 0.5; }
+
+/* ============================================================
+   v0.2.14 — Footer buttons side-by-side, centered circle icons,
+   no redundant bottom 닫기 in sheets (top-right X remains).
+   ============================================================ */
+/* Result footer: copy on top, then two equal buttons side by side. */
+.device-stage .result-footer { display: block; margin-top: 40px; padding-top: 24px; }
+.result-footer-actions { display: flex; gap: 10px; margin-top: 16px; }
+.device-stage .result-footer-actions > button {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  margin-top: 0;
+  padding-left: 12px;
+  padding-right: 12px;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.result-footer-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.result-footer-actions svg { flex: 0 0 auto; width: 16px; height: 16px; }
+.result-footer-actions .secondary-button svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.result-footer-actions #save-proposal-button svg { fill: currentColor; stroke: none; }
+
+/* Circle icons: center the glyph and give it a comfortable size. */
+.card-icon { display: grid; place-items: center; font-size: 16px; line-height: 1; }
+
+/* Hide an empty sheet action bar (e.g. after dropping the bottom 닫기). */
+.sheet-actions:empty { display: none; padding: 0; }

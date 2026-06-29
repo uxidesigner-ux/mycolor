@@ -1161,3 +1161,12 @@
   - 홈 `#home-weather` 카드 + 결과 "오늘" 칩(노트 포함). ⚙/CTA → 출발지·도착지 설정 시트. 날씨 액션 document 위임.
   - `DESIGN.md`에 Records & Route 추가.
 - 검증: `npm run verify` 통과(`Version verified: 0.2.13`). Playwright: 홈 날씨 칩, 내비 3항목, 기록/저장 시트(삭제 포함), 경로 설정 시트 확인. 콘솔 error 0건.
+
+## 2026-06-29 KST — v0.2.14 결과 버튼 가로 배치 · 원형 아이콘 · 시트 닫기 정리
+
+- 요청: 결과 하단 버튼(저장/공유) 가로 배치, 원형 아이콘 중앙·크기 개선, 바텀시트 하단 닫기 버튼이 잘리므로 제거(우상단 X로 충분).
+- 조치:
+  - `renderSheetActions`에서 라벨 "닫기" 액션을 필터로 제거 → 모든 시트 하단 닫기 일괄 제거(X·grabber·backdrop로 닫힘). `.sheet-actions:empty{display:none}`.
+  - 결과 footer: `.device-stage .result-footer`를 block로(카피 위, 액션 아래), `.result-footer-actions`를 flex 가로 + 두 버튼 `flex:1`(동일 폭, nowrap, 아이콘 16px). 프레임 내(데스크톱) cramping 방지 위해 device-stage 스코프.
+  - `.card-icon` font-size 14→16px + place-items center + line-height:1 (원형 안 글리프 중앙·확대).
+- 검증: `npm run verify` 통과(`Version verified: 0.2.14`). Playwright: 저장/공유 버튼 동일 폭 같은 행(176px, top 동일), 공유 시트에 닫기 없음·링크 복사 완전 표시, 콘솔 error 0건.
