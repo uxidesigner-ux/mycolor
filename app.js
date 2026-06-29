@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.6";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.7";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -1804,6 +1804,165 @@ function openShareSheet() {
     ]
   });
 }
+
+// --- Header actions: Google login (identity-only), refresh, share ----------
+const GOOGLE_CLIENT_ID = window.MOI_CONFIG?.googleClientId?.trim() || "";
+const AUTH_KEY = "moi-auth-v1";
+const authButton = document.querySelector("#auth-button");
+const authLabel = document.querySelector("#auth-label");
+const authAvatar = document.querySelector("#auth-avatar");
+const AUTH_AVATAR_DEFAULT = authAvatar ? authAvatar.innerHTML : "";
+let authUser = null;
+let googleTokenClient = null;
+
+function renderAuth() {
+  if (!authButton) return;
+  if (authUser) {
+    const name = authUser.name || authUser.email || "로그인됨";
+    if (authLabel) authLabel.textContent = name;
+    authButton.classList.add("is-authed");
+    authButton.setAttribute("aria-label", `${name} · 계정 메뉴`);
+    if (authAvatar) {
+      const pic = typeof authUser.picture === "string" && authUser.picture.startsWith("https://") ? authUser.picture : "";
+      authAvatar.innerHTML = pic
+        ? `<img src="${escapeHtml(pic)}" alt="" referrerpolicy="no-referrer" />`
+        : `<span class="auth-initial">${escapeHtml((name.trim()[0] || "?").toUpperCase())}</span>`;
+    }
+  } else {
+    if (authLabel) authLabel.textContent = "로그인";
+    authButton.classList.remove("is-authed");
+    authButton.setAttribute("aria-label", "구글 계정으로 로그인");
+    if (authAvatar) authAvatar.innerHTML = AUTH_AVATAR_DEFAULT;
+  }
+}
+
+function setAuthUser(user) {
+  authUser = user;
+  try {
+    if (user) localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+    else localStorage.removeItem(AUTH_KEY);
+  } catch {}
+  renderAuth();
+}
+
+async function fetchGoogleProfile(accessToken) {
+  try {
+    const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+function initGoogleAuth() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUTH_KEY));
+    if (saved?.email) authUser = saved;
+  } catch {}
+  renderAuth();
+  if (!GOOGLE_CLIENT_ID) return;
+  const script = document.createElement("script");
+  script.src = "https://accounts.google.com/gsi/client";
+  script.async = true;
+  script.defer = true;
+  script.onload = () => {
+    if (!window.google?.accounts?.oauth2) return;
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: "openid email profile",
+      callback: async (response) => {
+        if (response.error || !response.access_token) {
+          showToast("로그인을 취소했어요.");
+          return;
+        }
+        const info = await fetchGoogleProfile(response.access_token);
+        if (!info?.email) {
+          showToast("프로필을 불러오지 못했어요.");
+          return;
+        }
+        setAuthUser({ name: info.name, email: info.email, picture: info.picture, sub: info.sub });
+        showToast(`${info.name || info.email}님 환영해요.`);
+      }
+    });
+  };
+  script.onerror = () => showToast("구글 로그인을 불러오지 못했어요.");
+  document.head.appendChild(script);
+}
+
+function openAccountSheet() {
+  openBottomSheet({
+    kicker: "계정",
+    title: authUser?.name || "내 계정",
+    description: authUser?.email || "",
+    body: `
+      <div class="sheet-account">
+        ${authUser?.picture ? `<img src="${escapeHtml(authUser.picture)}" alt="" referrerpolicy="no-referrer" />` : ""}
+        <div><strong>${escapeHtml(authUser?.name || "")}</strong><small>${escapeHtml(authUser?.email || "")}</small></div>
+      </div>
+    `,
+    actions: [
+      { label: "로그아웃", variant: "primary", handler: () => { setAuthUser(null); closeBottomSheet({ restoreFocus: false }); showToast("로그아웃했어요."); } },
+      { label: "닫기", handler: () => closeBottomSheet() }
+    ]
+  });
+}
+
+function handleAuthClick() {
+  if (authUser) return openAccountSheet();
+  if (!GOOGLE_CLIENT_ID) {
+    showToast("구글 로그인 설정(Client ID)이 아직 없어요.");
+    return;
+  }
+  if (googleTokenClient) googleTokenClient.requestAccessToken();
+  else showToast("구글 로그인을 불러오는 중이에요.");
+}
+
+function isProfileShareable() {
+  return Boolean(state.name && (state.faceShape || state.personalColor || state.mood));
+}
+
+function openAppShareSheet() {
+  const text = "MOI — 얼굴형·퍼스널컬러로 오늘의 스타일을 정리하는 데일리 스타일리스트";
+  const url = window.location.href;
+  const nativeShareAvailable = Boolean(navigator.share);
+  openBottomSheet({
+    kicker: "공유",
+    title: "MOI를 공유할까요?",
+    description: text,
+    body: `<div class="sheet-share-preview"><span>MOI</span><strong>${escapeHtml(text)}</strong><small>${escapeHtml(url)}</small></div>`,
+    actions: [
+      ...(nativeShareAvailable ? [{
+        label: "공유 시트 열기",
+        variant: "primary",
+        handler: async () => {
+          try {
+            await navigator.share({ title: "MOI", text, url });
+            closeBottomSheet({ restoreFocus: false });
+          } catch (error) {
+            if (error.name !== "AbortError") showToast("공유하지 못했어요.");
+          }
+        }
+      }] : []),
+      { label: "링크 복사", variant: nativeShareAvailable ? "secondary" : "primary", handler: async () => {
+        try {
+          if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+          closeBottomSheet({ restoreFocus: false });
+          showToast("앱 링크를 복사했어요.");
+        } catch { showToast("복사하지 못했어요."); }
+      } },
+      { label: "닫기", handler: () => closeBottomSheet() }
+    ]
+  });
+}
+
+authButton?.addEventListener("click", handleAuthClick);
+document.querySelector("#refresh-button")?.addEventListener("click", () => window.location.reload());
+document.querySelector("#share-button")?.addEventListener("click", () => {
+  isProfileShareable() ? openShareSheet() : openAppShareSheet();
+});
+initGoogleAuth();
 
 document.querySelectorAll(".photo-start-button").forEach((button) => {
   button.addEventListener("click", () => beginPhotoFlow({ pickImmediately: button.dataset.pickImmediately === "true" }));
