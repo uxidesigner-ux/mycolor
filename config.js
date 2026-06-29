@@ -2,7 +2,7 @@ window.MOI_CONFIG = {
   analysisEndpoint: "",
   photoAnalysisEnabled: false,
   demoMode: false,
-  appVersion: "0.2.12",
+  appVersion: "0.2.13",
   // Google Identity Services OAuth Client ID (Web). Public value — safe to commit.
   // Create one in Google Cloud Console (project mycolor-500901) and paste it here.
   // Until set, the login button shows a setup notice instead of signing in.

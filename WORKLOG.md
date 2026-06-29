@@ -1150,3 +1150,14 @@
   - 다른 탭은 미변경(날씨는 "오늘" 중심). 권한 거부·오프라인 시 기존 추천 유지.
   - `DESIGN.md`에 Weather Layer 원칙 추가.
 - 검증: `npm run verify` 통과(`Version verified: 0.2.12`). Playwright — ready(캐시 시드) 시 칩+노트 4개 렌더, idle 시 CTA 노출, 콘솔 error 0건. (실제 Open-Meteo/지오로케이션은 샌드박스 네트워크 차단으로 라이브에서만 동작.)
+
+## 2026-06-29 KST — v0.2.13 기록/저장 + 출발지·도착지 경로 날씨
+
+- 요청: 내비 저장 옆에 "기록" 추가(조회 내용 자동 기록). "저장"은 "이 제안 저장하기" 버튼 누른 것만 날짜별. 홈에 현재 위치 오늘 날씨, 위치 조정 가능(출발지/도착지). "한 번에 전부, 도착지 선택형" 수용.
+- 멘탈모델: 앱 = 집→외출 준비. 추천 = 정체성 × (무드 · 경로 날씨). 흐름 = 조회(자동 기록) → 저장(명시).
+- 조치(`index.html`, `app.js`, `styles.css`):
+  - 기록/저장: 내비 `홈·기록·저장`. `moi-history-v1`(자동, cap 50, 1분 내 동일 프로필 dedup) + `moi-saved-v1`(명시). 결과 footer "이 제안 저장하기" 버튼. 기록/저장 large 바텀시트 리스트, 탭 시 해당 프로필로 결과 재열기, 저장은 삭제 가능. 헤더 북마크/인라인 저장 → 저장 리스트.
+  - 경로 날씨: 출발지(기본 현재 위치)/도착지(선택=활동 지역) 모델로 리팩터. `moi-route-v1`. 두 지점 fetch + `combinedWeather()`. routeSignature+1h 캐시.
+  - 홈 `#home-weather` 카드 + 결과 "오늘" 칩(노트 포함). ⚙/CTA → 출발지·도착지 설정 시트. 날씨 액션 document 위임.
+  - `DESIGN.md`에 Records & Route 추가.
+- 검증: `npm run verify` 통과(`Version verified: 0.2.13`). Playwright: 홈 날씨 칩, 내비 3항목, 기록/저장 시트(삭제 포함), 경로 설정 시트 확인. 콘솔 error 0건.

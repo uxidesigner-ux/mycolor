@@ -4728,3 +4728,78 @@ body:has(#home-screen.is-active) .device-frame > .site-header { display: flex; }
 }
 @keyframes weather-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .weather-spinner { animation: none; } }
+
+/* ============================================================
+   v0.2.13 — Records (history/saved) + route weather
+   기록/저장 리스트 시트, 결과 저장 버튼, 홈 날씨 카드, 출발지/도착지 설정.
+   ============================================================ */
+/* Home weather card reuses the weather-chip styles; give it spacing. */
+.home-weather:empty { display: none; }
+.home-weather { margin: 2px 0 2px; }
+.home-weather .weather-cta,
+.home-weather .weather-chip { background: var(--surface-soft); }
+
+.weather-route { color: var(--muted-strong); font-weight: 700; }
+
+/* Result footer: stack the save (primary) + share (secondary). */
+.result-footer-actions { display: grid; gap: 10px; margin-top: 16px; }
+.result-footer-actions .secondary-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.result-footer-actions .secondary-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#save-proposal-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+#save-proposal-button svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* Record list (history / saved) inside a bottom sheet */
+.record-empty { margin: 8px 0 4px; color: var(--muted); font-size: 13px; }
+.record-list { display: grid; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; }
+.record-item { display: flex; align-items: stretch; gap: 8px; }
+.record-open {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 3px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  text-align: left;
+  cursor: pointer;
+}
+.record-open strong { font-size: 15px; letter-spacing: -0.01em; }
+.record-open small { color: var(--muted); font-size: 12px; }
+.record-delete {
+  flex: 0 0 auto;
+  width: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  color: var(--muted-strong);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* Route (출발지/도착지) settings form */
+.route-form { display: grid; gap: 18px; }
+.route-field { display: grid; gap: 8px; }
+.route-label { font-size: 13px; font-weight: 800; color: var(--ink); }
+.route-label small { margin-left: 6px; color: var(--muted); font-weight: 700; font-size: 11px; }
+.route-origin-toggle { display: inline-flex; gap: 6px; }
+.route-toggle {
+  flex: 1 1 0;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  color: var(--muted-strong);
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+.route-toggle.is-active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.route-field input {
+  min-height: 50px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  font-size: 16px;
+}
+.route-field input:disabled { opacity: 0.5; }

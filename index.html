@@ -8,7 +8,7 @@
     <title>MOI — 데일리 퍼스널 스타일리스트</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=0.2.12" />
+    <link rel="stylesheet" href="styles.css?v=0.2.13" />
   </head>
   <body class="is-splashing">
     <noscript><style>.splash-screen{display:none}</style></noscript>
@@ -20,7 +20,7 @@
         <p>Daily personal stylist</p>
       </div>
       <div class="splash-loading-bar" aria-hidden="true"><span></span></div>
-      <p class="splash-version" id="splash-version">v0.2.12</p>
+      <p class="splash-version" id="splash-version">v0.2.13</p>
     </div>
 
     <main class="app-shell">
@@ -68,8 +68,10 @@
               <p class="start-kicker">MOI</p>
               <h1 id="home-title">스타일 시작</h1>
             </div>
-            <span class="start-version" id="start-version">v0.2.12</span>
+            <span class="start-version" id="start-version">v0.2.13</span>
           </div>
+
+          <section id="home-weather" class="home-weather" aria-label="오늘 날씨"></section>
 
           <div class="start-card-grid">
             <button class="home-photo-card start-card start-card-featured photo-start-button" type="button" data-pick-immediately="true" aria-describedby="photo-availability-note">
@@ -103,8 +105,12 @@
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9Z"/></svg>
                   <span>홈</span>
                 </button>
-                <button class="start-nav-item saved-inline-button" id="saved-report-inline-button" type="button" hidden>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7.5c0 5-8 10.5-8 10.5S4 12.5 4 7.5A4.2 4.2 0 0 1 12 5a4.2 4.2 0 0 1 8 2.5Z"/></svg>
+                <button class="start-nav-item" id="history-nav-button" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  <span>기록</span>
+                </button>
+                <button class="start-nav-item saved-inline-button" id="saved-report-inline-button" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg>
                   <span>저장</span>
                 </button>
               </div>
@@ -419,10 +425,16 @@
 
         <div class="result-footer">
           <p>추천은 선택한 프로필을 바탕으로 만든 스타일 가이드예요.</p>
-          <button class="secondary-button" id="share-result" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M5 13v7h14v-7" /></svg>
-            결과 공유하기
-          </button>
+          <div class="result-footer-actions">
+            <button class="primary-button full-button" id="save-proposal-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg>
+              이 제안 저장하기
+            </button>
+            <button class="secondary-button" id="share-result" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M5 13v7h14v-7" /></svg>
+              결과 공유하기
+            </button>
+          </div>
         </div>
       </section>
           <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -448,7 +460,7 @@
         </div>
       </div>
     </main>
-    <script src="config.js?v=0.2.12"></script>
-    <script src="app.js?v=0.2.12"></script>
+    <script src="config.js?v=0.2.13"></script>
+    <script src="app.js?v=0.2.13"></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.12";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.13";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -1294,6 +1294,7 @@ function refreshStep() {
 function completeProfile() {
   if (!styleTargets[state.styleTarget]) state.styleTarget = "neutral";
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  logHistory();
   revealSavedEntryPoints();
   currentCategory = "today";
   updateCategoryTabs("today");
@@ -1465,9 +1466,18 @@ function renderHeading(category) {
 // --- Weather (Open-Meteo, client-only, no API key) --------------------------
 // Weather modulates only the daily "오늘" layer: a chip + a few adjustment
 // notes over the fixed identity recommendations.
-const WEATHER_CACHE_KEY = "moi-weather-v1";
+const WEATHER_CACHE_KEY = "moi-weather-v2";
 const WEATHER_TTL_MS = 60 * 60 * 1000;
-let weatherState = { status: "idle", data: null }; // idle|loading|ready|error|denied
+const ROUTE_KEY = "moi-route-v1";
+let route = loadRoute();
+let weatherState = { status: "idle", origin: null, dest: null }; // idle|loading|ready|error|denied
+
+function loadRoute() {
+  try { const r = JSON.parse(localStorage.getItem(ROUTE_KEY)); if (r?.origin?.mode) return r; } catch {}
+  return { origin: { mode: "geo", name: "현재 위치" } };
+}
+function saveRoute() { try { localStorage.setItem(ROUTE_KEY, JSON.stringify(route)); } catch {} }
+function routeSignature() { return `${route.origin.mode}:${route.origin.name}|${(state.area || "").trim()}`; }
 
 function weatherCondition(code) {
   if (code === 0) return { emoji: "☀️", label: "맑음" };
@@ -1485,7 +1495,7 @@ function weatherCondition(code) {
 function readCachedWeather() {
   try {
     const raw = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY));
-    if (raw && Date.now() - raw.fetchedAt < WEATHER_TTL_MS) return raw;
+    if (raw?.status === "ready" && Date.now() - raw.fetchedAt < WEATHER_TTL_MS && raw.sig === routeSignature()) return raw;
   } catch {}
   return null;
 }
@@ -1540,33 +1550,52 @@ function setWeatherState(next) {
   refreshWeatherUI();
 }
 
-async function loadWeather({ source }) {
-  setWeatherState({ status: "loading" });
+async function resolvePoint(mode, name) {
+  if (mode === "geo") { const c = await getGeolocation(); return { lat: c.lat, lon: c.lon, place: "현재 위치" }; }
+  const g = await geocodeArea(name);
+  return { lat: g.lat, lon: g.lon, place: g.place };
+}
+
+async function loadWeather() {
+  setWeatherState({ status: "loading", origin: null, dest: null });
   try {
-    let coords, place;
-    if (source === "geo") {
-      coords = await getGeolocation();
-      place = state.area?.trim() || "내 위치";
-    } else {
-      const area = state.area?.trim();
-      if (!area) return setWeatherState({ status: "idle" });
-      const g = await geocodeArea(area);
-      coords = { lat: g.lat, lon: g.lon };
-      place = g.place;
+    const o = await resolvePoint(route.origin.mode, route.origin.name);
+    const origin = await fetchWeather(o.lat, o.lon, o.place);
+    let dest = null;
+    const destName = (state.area || "").trim();
+    if (destName) {
+      try { const dp = await geocodeArea(destName); dest = await fetchWeather(dp.lat, dp.lon, dp.place); } catch {}
     }
-    const data = await fetchWeather(coords.lat, coords.lon, place, source);
-    try { localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(data)); } catch {}
-    setWeatherState({ status: "ready", data });
+    const payload = { status: "ready", origin, dest, sig: routeSignature(), fetchedAt: Date.now() };
+    try { localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(payload)); } catch {}
+    setWeatherState(payload);
   } catch (err) {
-    setWeatherState({ status: err?.code === 1 ? "denied" : "error" });
+    setWeatherState({ status: err?.code === 1 ? "denied" : "error", origin: null, dest: null });
   }
 }
 
 function ensureWeather() {
   if (weatherState.status === "ready" || weatherState.status === "loading") return;
   const cached = readCachedWeather();
-  if (cached) return setWeatherState({ status: "ready", data: cached });
-  if (state.area?.trim()) loadWeather({ source: "area" });
+  if (cached) return setWeatherState(cached);
+  if (route.origin.mode === "manual") loadWeather();
+}
+
+function combinedWeather() {
+  const o = weatherState.origin, d = weatherState.dest;
+  if (!o) return null;
+  if (!d) return o;
+  return {
+    code: (d.precipProb ?? 0) > (o.precipProb ?? 0) ? d.code : o.code,
+    temp: o.temp,
+    humidity: Math.max(o.humidity, d.humidity),
+    precip: Math.max(o.precip, d.precip),
+    wind: Math.max(o.wind, d.wind),
+    tMax: Math.max(o.tMax, d.tMax),
+    tMin: Math.min(o.tMin, d.tMin),
+    precipProb: Math.max(o.precipProb ?? 0, d.precipProb ?? 0),
+    uv: Math.max(o.uv ?? 0, d.uv ?? 0)
+  };
 }
 
 function weatherAdvice(w) {
@@ -1584,37 +1613,185 @@ function weatherAdvice(w) {
   return notes.slice(0, 4);
 }
 
-function renderWeatherInner() {
+function renderWeatherChip({ withNotes }) {
   const s = weatherState;
   if (s.status === "loading") {
     return `<div class="weather-chip is-loading"><span class="weather-spinner" aria-hidden="true"></span><span>오늘 날씨를 불러오는 중…</span></div>`;
   }
-  if (s.status === "ready" && s.data) {
-    const w = s.data;
-    const c = weatherCondition(w.code);
-    const notes = weatherAdvice(w);
+  if (s.status === "ready" && s.origin) {
+    const o = s.origin;
+    const combo = combinedWeather() || o;
+    const c = weatherCondition(combo.code);
+    const notes = withNotes ? weatherAdvice(combo) : [];
+    const destLine = s.dest ? ` <span class="weather-route">→ ${escapeHtml(s.dest.place)} ${s.dest.temp}°</span>` : "";
     return `
       <div class="weather-chip">
         <span class="weather-emoji" aria-hidden="true">${c.emoji}</span>
         <div class="weather-main">
-          <strong>${w.temp}°<span> · ${c.label}</span></strong>
-          <small>${escapeHtml(w.place)} · ↑${w.tMax}° ↓${w.tMin}° · 습도 ${w.humidity}%${w.uv != null ? ` · 자외선 ${w.uv}` : ""}</small>
+          <strong>${o.temp}°<span> · ${c.label}</span></strong>
+          <small>${escapeHtml(o.place)}${destLine} · ↑${combo.tMax}° ↓${combo.tMin}° · 습도 ${combo.humidity}%${combo.uv ? ` · 자외선 ${combo.uv}` : ""}</small>
         </div>
-        <button class="weather-refresh" type="button" data-weather-action="refresh" aria-label="날씨 새로고침">↻</button>
+        <button class="weather-refresh" type="button" data-weather-action="settings" aria-label="날씨·위치 설정">⚙</button>
       </div>
       ${notes.length ? `<ul class="weather-notes">${notes.map((n) => `<li><span class="weather-note-tag">${n.tag}</span>${escapeHtml(n.text)}</li>`).join("")}</ul>` : ""}
     `;
   }
   if (s.status === "denied" || s.status === "error") {
-    const msg = s.status === "denied" ? "위치 권한이 없어 날씨를 못 가져왔어요." : "날씨를 불러오지 못했어요.";
-    return `<button class="weather-cta" type="button" data-weather-action="locate"><span aria-hidden="true">📍</span> ${msg} 다시 시도</button>`;
+    const msg = s.status === "denied" ? "위치 권한이 없어요." : "날씨를 못 불러왔어요.";
+    return `<button class="weather-cta" type="button" data-weather-action="settings"><span aria-hidden="true">📍</span> ${msg} 위치 설정하기</button>`;
   }
-  return `<button class="weather-cta" type="button" data-weather-action="locate"><span aria-hidden="true">📍</span> 오늘 날씨에 맞춰 추천 받기</button>`;
+  return `<button class="weather-cta" type="button" data-weather-action="settings"><span aria-hidden="true">📍</span> 오늘 날씨·위치 설정하기</button>`;
 }
 
+function renderWeatherInner() { return renderWeatherChip({ withNotes: true }); }
+
 function refreshWeatherUI() {
-  const el = document.querySelector("#today-weather");
-  if (el) el.innerHTML = renderWeatherInner();
+  const home = document.querySelector("#home-weather");
+  if (home) home.innerHTML = renderWeatherChip({ withNotes: false });
+  const today = document.querySelector("#today-weather");
+  if (today) today.innerHTML = renderWeatherChip({ withNotes: true });
+}
+
+function applyRouteFromSheet() {
+  const mode = sheetBody.querySelector("[data-route-origin].is-active")?.dataset.routeOrigin || "geo";
+  const originName = normalizeText(sheetBody.querySelector("#route-origin-input")?.value, 24);
+  route.origin = mode === "manual" && originName ? { mode: "manual", name: originName } : { mode: "geo", name: "현재 위치" };
+  saveRoute();
+  state.area = normalizeText(sheetBody.querySelector("#route-dest-input")?.value, 24);
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  if (resultAreaInput) resultAreaInput.value = state.area;
+  try { localStorage.removeItem(WEATHER_CACHE_KEY); } catch {}
+  weatherState = { status: "idle", origin: null, dest: null };
+  loadWeather();
+}
+
+function openRouteSheet() {
+  const originManual = route.origin.mode === "manual";
+  openBottomSheet({
+    kicker: "오늘 날씨",
+    title: "출발지와 도착지",
+    description: "집에서 나가는 길의 날씨에 맞춰 추천을 조정해요.",
+    body: `
+      <div class="route-form">
+        <div class="route-field">
+          <span class="route-label">출발지</span>
+          <div class="route-origin-toggle">
+            <button type="button" class="route-toggle ${originManual ? "" : "is-active"}" data-route-origin="geo">현재 위치</button>
+            <button type="button" class="route-toggle ${originManual ? "is-active" : ""}" data-route-origin="manual">직접 입력</button>
+          </div>
+          <input id="route-origin-input" type="text" maxlength="24" placeholder="예: 서울 마포구" value="${originManual ? escapeHtml(route.origin.name) : ""}" ${originManual ? "" : "disabled"} />
+        </div>
+        <div class="route-field">
+          <span class="route-label">도착지 <small>선택</small></span>
+          <input id="route-dest-input" type="text" maxlength="24" placeholder="예: 서울 성수동" value="${escapeHtml((state.area || "").trim())}" />
+        </div>
+      </div>
+    `,
+    actions: [
+      { label: "적용", variant: "primary", handler: () => { applyRouteFromSheet(); closeBottomSheet({ restoreFocus: false }); } },
+      { label: "닫기", handler: () => closeBottomSheet() }
+    ],
+    onOpen: () => {
+      sheetBody.querySelectorAll("[data-route-origin]").forEach((btn) => btn.addEventListener("click", () => {
+        sheetBody.querySelectorAll("[data-route-origin]").forEach((b) => b.classList.toggle("is-active", b === btn));
+        const input = sheetBody.querySelector("#route-origin-input");
+        input.disabled = btn.dataset.routeOrigin !== "manual";
+        if (input.disabled) input.value = ""; else input.focus();
+      }));
+    }
+  });
+}
+
+// --- Records: history (auto) + saved (explicit) ----------------------------
+const HISTORY_KEY = "moi-history-v1";
+const SAVED_KEY = "moi-saved-v1";
+const HISTORY_CAP = 50;
+
+function readStore(key) { try { const a = JSON.parse(localStorage.getItem(key)); return Array.isArray(a) ? a : []; } catch { return []; } }
+function writeStore(key, arr) { try { localStorage.setItem(key, JSON.stringify(arr)); } catch {} }
+function makeRecordId() { return globalThis.crypto?.randomUUID?.() || `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`; }
+
+function profileSnapshot() {
+  return {
+    name: state.name, styleTarget: state.styleTarget, faceShape: state.faceShape,
+    personalColor: state.personalColor, mood: state.mood, area: state.area,
+    analysisSource: state.analysisSource, analysisConfidence: state.analysisConfidence, analysisSummary: state.analysisSummary
+  };
+}
+function recordSummary(p) {
+  const parts = [personalColors[p.personalColor]?.label, moods[p.mood]?.label, faceShapes[p.faceShape]?.label].filter(Boolean);
+  return parts.join(" · ") || styleTargets[p.styleTarget]?.label || "스타일";
+}
+function recordDate(ts) {
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function logHistory() {
+  if (!state.name || !state.mood) return;
+  const list = readStore(HISTORY_KEY);
+  const entry = { id: makeRecordId(), ts: Date.now(), profile: profileSnapshot() };
+  const last = list[0];
+  if (last && entry.ts - last.ts < 60000 && JSON.stringify(last.profile) === JSON.stringify(entry.profile)) return;
+  list.unshift(entry);
+  writeStore(HISTORY_KEY, list.slice(0, HISTORY_CAP));
+}
+
+function saveProposal() {
+  if (!state.name || !state.mood) { showToast("먼저 추천을 만들어 주세요."); return; }
+  const list = readStore(SAVED_KEY);
+  list.unshift({ id: makeRecordId(), ts: Date.now(), profile: profileSnapshot() });
+  writeStore(SAVED_KEY, list);
+  showToast("이 제안을 저장했어요.");
+}
+
+function openRecordEntry(entry) {
+  const normalized = normalizeProfile(entry.profile);
+  if (!normalized) { showToast("열 수 없는 기록이에요."); return; }
+  Object.assign(state, normalized);
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  if (resultAreaInput) resultAreaInput.value = state.area || "";
+  closeBottomSheet({ restoreFocus: false });
+  logHistory();
+  renderResultHeader();
+  currentCategory = "today";
+  updateCategoryTabs("today");
+  renderCategory("today");
+  showScreen("result");
+}
+
+function renderRecordList(list, { deletable }) {
+  if (!list.length) return `<p class="record-empty">아직 없어요. 추천을 만들면 여기에 쌓여요.</p>`;
+  return `<ul class="record-list">${list.map((e) => `
+    <li class="record-item">
+      <button class="record-open" type="button" data-record-open="${e.id}">
+        <strong>${escapeHtml(recordSummary(e.profile))}</strong>
+        <small>${escapeHtml(e.profile.name || "")}${e.profile.styleTarget ? ` · ${escapeHtml(styleTargets[e.profile.styleTarget]?.label || "")}` : ""} · ${recordDate(e.ts)}</small>
+      </button>
+      ${deletable ? `<button class="record-delete" type="button" data-record-delete="${e.id}" aria-label="삭제">✕</button>` : ""}
+    </li>`).join("")}</ul>`;
+}
+
+function openHistorySheet() {
+  const list = readStore(HISTORY_KEY);
+  openBottomSheet({
+    kicker: "기록", title: "최근에 본 스타일",
+    description: list.length ? "조회한 추천이 자동으로 쌓여요." : "",
+    body: `<div data-record-scope="history">${renderRecordList(list, { deletable: false })}</div>`,
+    detent: "large",
+    actions: [{ label: "닫기", handler: () => closeBottomSheet() }]
+  });
+}
+
+function openSavedSheet() {
+  const list = readStore(SAVED_KEY);
+  openBottomSheet({
+    kicker: "저장", title: "저장한 제안",
+    description: list.length ? "‘이 제안 저장하기’로 담은 스타일이에요." : "",
+    body: `<div data-record-scope="saved">${renderRecordList(list, { deletable: true })}</div>`,
+    detent: "large",
+    actions: [{ label: "닫기", handler: () => closeBottomSheet() }]
+  });
 }
 
 function renderToday() {
@@ -2156,13 +2333,10 @@ document.querySelector(".brand")?.addEventListener("click", (event) => {
 });
 document.querySelector("#demo-photo-button").hidden = !demoMode;
 document.querySelector("#demo-photo-button").addEventListener("click", () => setSelectedPhoto(createDemoPhoto()));
-function openSavedReport() {
-  renderResultHeader();
-  renderCategory(currentCategory);
-  showScreen("result");
-}
-savedReportButton.addEventListener("click", openSavedReport);
-savedReportInlineButton?.addEventListener("click", openSavedReport);
+savedReportButton.addEventListener("click", openSavedSheet);
+savedReportInlineButton?.addEventListener("click", openSavedSheet);
+document.querySelector("#history-nav-button")?.addEventListener("click", openHistorySheet);
+document.querySelector("#save-proposal-button")?.addEventListener("click", saveProposal);
 
 photoInput.addEventListener("change", (event) => handlePhoto(event.target.files?.[0]));
 photoDropzone.addEventListener("dragover", (event) => {
@@ -2282,12 +2456,32 @@ document.addEventListener("click", (event) => {
 
 recommendationContent.addEventListener("click", (event) => {
   const mapButton = event.target.closest("[data-map-query]");
-  if (mapButton) return openMapSearch(mapButton.dataset.mapQuery);
+  if (mapButton) openMapSearch(mapButton.dataset.mapQuery);
+});
+
+// Weather chip/CTA actions work on both the home card and the result tab.
+document.addEventListener("click", (event) => {
   const weatherButton = event.target.closest("[data-weather-action]");
-  if (weatherButton) {
-    const action = weatherButton.dataset.weatherAction;
-    const source = action === "refresh" && weatherState.data?.source === "area" ? "area" : "geo";
-    loadWeather({ source });
+  if (!weatherButton) return;
+  const action = weatherButton.dataset.weatherAction;
+  if (action === "settings") openRouteSheet();
+  else if (action === "locate") { route.origin = { mode: "geo", name: "현재 위치" }; saveRoute(); loadWeather(); }
+});
+
+// Record list items (history/saved) open or delete.
+sheetBody?.addEventListener("click", (event) => {
+  const openBtn = event.target.closest("[data-record-open]");
+  if (openBtn) {
+    const id = openBtn.dataset.recordOpen;
+    const entry = [...readStore(HISTORY_KEY), ...readStore(SAVED_KEY)].find((e) => e.id === id);
+    if (entry) openRecordEntry(entry);
+    return;
+  }
+  const delBtn = event.target.closest("[data-record-delete]");
+  if (delBtn) {
+    writeStore(SAVED_KEY, readStore(SAVED_KEY).filter((e) => e.id !== delBtn.dataset.recordDelete));
+    const scope = sheetBody.querySelector('[data-record-scope="saved"]');
+    if (scope) scope.innerHTML = renderRecordList(readStore(SAVED_KEY), { deletable: true });
   }
 });
 
@@ -2339,5 +2533,10 @@ if (window.location.hash === "#result" && hasSavedProfile) {
   renderCategory("today");
   showScreen("result");
 }
+
+// Home weather card: render current state (CTA or cached) and auto-load when
+// a manual origin means no permission prompt is needed.
+ensureWeather();
+refreshWeatherUI();
 
 window.addEventListener("load", scheduleSplashDismiss, { once: true });
