@@ -1078,3 +1078,28 @@
     - 데스크톱: 퀴즈 완료 → 결과가 프레임 안에서 렌더·내부 스크롤(헤더 고정), 요약 그리드 단일 컬럼으로 정리.
     - 모바일 390×844: 프레임 풀스크린, 소개 숨김, 내비 고정.
     - 콘솔 error 0건(외부 Pexels 이미지 차단 로그는 샌드박스 네트워크 제약).
+
+## 2026-06-29 KST — v0.2.7 헤더 액션: 구글 로그인 + 새로고침 + 공유
+
+- 요청: 상단 우측에 새로고침·공유 버튼, 상단 좌측에 로그인(구글) 버튼 추가. 구글 로그인은 uxidesigner 계정/mycolor-500901 프로젝트로 진행. DB 필요하면 구글에서 설정.
+- 버전:
+  - `0.2.6` → `0.2.7`
+- 범위 결정:
+  - 원격 리눅스 환경에서는 사용자 구글 콘솔/Chrome 세션에 접근 불가 → OAuth 클라이언트 생성은 사용자가 수행(콘솔), 코드/연동은 내가 담당.
+  - 로그인 범위 = 신원 확인만(서버 DB·백엔드 없음). GIS로 프로필(이름·이메일·사진)만 받아 표시, 세션은 localStorage. 스타일 데이터는 기존대로 기기 저장.
+- 조치:
+  - 프레임 헤더(`.site-header`)를 모든 화면 지속 노출 chrome으로 전환(홈 포함, 홈은 앱바 위에 슬림 유틸바).
+    - 좌측: 브랜드 + `로그인` 버튼(구글 G 아이콘 → 로그인 시 아바타+이름 다크 pill, 클릭 시 계정 시트에서 로그아웃).
+    - 우측: 저장(북마크, 저장 시에만) · 새로고침 · 공유 아이콘.
+  - `app.js`에 Google Identity Services(`accounts.google.com/gsi/client`) 연동:
+    - `initTokenClient`(scope `openid email profile`) → access token → `oauth2/v3/userinfo`로 프로필 취득 → localStorage 세션.
+    - `config.googleClientId` 비어 있으면 로그인 클릭 시 설정 안내 토스트(앱은 정상 동작).
+    - 새로고침 = `location.reload()`. 공유 = 결과 있으면 스타일 공유 시트, 없으면 앱 공유 시트.
+  - `config.js`에 `googleClientId` 추가(웹 OAuth Client ID는 공개값이라 커밋 안전). 사용자 제공 Client ID(`283494466700-…apps.googleusercontent.com`) 적용. 승인된 JS 원본: `https://uxidesigner-ux.github.io`.
+  - `styles.css` v0.2.7 블록: 헤더 클러스터/아이콘 버튼/로그인 pill/아바타/계정 시트 스타일. `[hidden]` 존중(저장 아이콘 숨김 버그 수정).
+- 파일:
+  - `DESIGN.md`, `WORKLOG.md`, `app.js`, `config.js`, `index.html`, `package.json`, `styles.css`
+- 검증:
+  - `npm run verify` 통과(`Version verified: 0.2.7`, Worker contract verified, build OK).
+  - Playwright(Chromium) 캡처: 데스크톱 홈 로그아웃(좌 `G 로그인`, 우 새로고침/공유), 시뮬레이트 로그인(아바타+이름 다크 pill, 저장 아이콘 숨김 확인), 모바일. 콘솔 error 0건.
+  - 주의: 실제 구글 로그인은 승인된 원본이 `github.io`라 라이브에서만 동작(샌드박스/로컬은 origin 불일치로 미동작). OAuth 동의 화면이 테스트 모드면 테스트 사용자만 로그인 가능.

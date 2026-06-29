@@ -4497,3 +4497,80 @@ body:has(#home-screen.is-active) main.app-shell { min-height: 100svh; }
     box-shadow: none;
   }
 }
+
+/* ============================================================
+   v0.2.7 — Header actions: auth (Google login) + refresh + share
+   The frame header becomes persistent app chrome on every screen:
+   login (left) + refresh/share/saved (right). Identity-only Google
+   sign-in via GIS; signed-in state shows avatar + name.
+   ============================================================ */
+/* Header is now visible on home too (home keeps its appbar below it). */
+body:has(#home-screen.is-active) .device-frame > .site-header { display: flex; }
+
+.device-frame > .site-header { justify-content: space-between; gap: 10px; }
+.site-header .header-cluster { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.site-header .header-right { flex: 0 0 auto; }
+.site-header .header-left { min-width: 0; }
+.site-header .brand { flex: 0 0 auto; }
+
+.site-header .header-action {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--glass-hairline);
+  border-radius: 50%;
+  background: var(--glass-tint-soft);
+  color: var(--ink);
+  cursor: pointer;
+}
+.site-header .header-action svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.site-header .header-action[hidden] { display: none; }
+.site-header .header-action#saved-report-button svg { fill: currentColor; stroke: none; }
+
+.auth-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  max-width: 170px;
+  height: 36px;
+  padding: 0 12px 0 5px;
+  border: 1px solid var(--glass-hairline);
+  border-radius: var(--radius-pill);
+  background: var(--glass-tint-soft);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+.auth-button .auth-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auth-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--surface-mid);
+}
+.auth-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.auth-avatar .google-g { width: 16px; height: 16px; }
+.auth-avatar .auth-initial { font-size: 12px; font-weight: 900; color: var(--white); }
+.auth-button.is-authed { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.auth-button.is-authed .auth-avatar { background: rgba(255, 255, 255, 0.22); }
+
+.sheet-account { display: flex; align-items: center; gap: 14px; }
+.sheet-account img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
+.sheet-account strong { display: block; font-size: 16px; }
+.sheet-account small { color: var(--muted); font-size: 13px; }

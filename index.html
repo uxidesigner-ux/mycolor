@@ -8,7 +8,7 @@
     <title>MOI — 데일리 퍼스널 스타일리스트</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=0.2.6" />
+    <link rel="stylesheet" href="styles.css?v=0.2.7" />
   </head>
   <body class="is-splashing">
     <noscript><style>.splash-screen{display:none}</style></noscript>
@@ -20,7 +20,7 @@
         <p>Daily personal stylist</p>
       </div>
       <div class="splash-loading-bar" aria-hidden="true"><span></span></div>
-      <p class="splash-version" id="splash-version">v0.2.6</p>
+      <p class="splash-version" id="splash-version">v0.2.7</p>
     </div>
 
     <main class="app-shell">
@@ -38,14 +38,26 @@
 
       <div class="device-frame">
         <header class="site-header">
-          <a class="brand" href="#home" aria-label="MOI 홈">
-            <span class="brand-mark">M</span>
-            <span>MOI</span>
-          </a>
-          <button class="header-link" id="saved-report-button" type="button" hidden>
-            저장된 스타일 보기
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
-          </button>
+          <div class="header-cluster header-left">
+            <a class="brand" href="#home" aria-label="MOI 홈"><span class="brand-mark">M</span></a>
+            <button class="auth-button" id="auth-button" type="button" aria-label="구글 계정으로 로그인">
+              <span class="auth-avatar" id="auth-avatar" aria-hidden="true">
+                <svg class="google-g" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.68-.06-1.34-.18-1.97H12v3.72h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.23c1.89-1.74 2.99-4.3 2.99-7.27Z"/><path fill="#34A853" d="M12 22c2.7 0 4.97-.9 6.62-2.43l-3.23-2.5c-.9.6-2.05.96-3.39.96-2.6 0-4.8-1.76-5.59-4.12H3.07v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.41 13.91a6.01 6.01 0 0 1 0-3.82V7.5H3.07a10 10 0 0 0 0 9l3.34-2.59Z"/><path fill="#EA4335" d="M12 5.96c1.47 0 2.79.5 3.83 1.5l2.86-2.86C16.96 2.99 14.7 2 12 2A10 10 0 0 0 3.07 7.5l3.34 2.59C7.2 7.72 9.4 5.96 12 5.96Z"/></svg>
+              </span>
+              <span class="auth-label" id="auth-label">로그인</span>
+            </button>
+          </div>
+          <div class="header-cluster header-right">
+            <button class="icon-button header-action" id="saved-report-button" type="button" aria-label="저장된 스타일 보기" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg>
+            </button>
+            <button class="icon-button header-action" id="refresh-button" type="button" aria-label="새로고침">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.3-6.4L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.3 6.4L3 16"/><path d="M3 21v-5h5"/></svg>
+            </button>
+            <button class="icon-button header-action" id="share-button" type="button" aria-label="공유">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M5 13v7h14v-7"/></svg>
+            </button>
+          </div>
         </header>
 
         <div class="device-stage">
@@ -56,7 +68,7 @@
               <p class="start-kicker">MOI</p>
               <h1 id="home-title">스타일 시작</h1>
             </div>
-            <span class="start-version" id="start-version">v0.2.6</span>
+            <span class="start-version" id="start-version">v0.2.7</span>
             <button class="start-icon-button photo-start-button" type="button" data-pick-immediately="true" aria-label="사진 등록">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5 7 6h10l2 2.5h1.5A2.5 2.5 0 0 1 23 11v7.5A2.5 2.5 0 0 1 20.5 21h-17A2.5 2.5 0 0 1 1 18.5V11a2.5 2.5 0 0 1 2.5-2.5H5Z"/><circle cx="12" cy="14" r="4"/></svg>
             </button>
@@ -439,7 +451,7 @@
         </div>
       </div>
     </main>
-    <script src="config.js?v=0.2.6"></script>
-    <script src="app.js?v=0.2.6"></script>
+    <script src="config.js?v=0.2.7"></script>
+    <script src="app.js?v=0.2.7"></script>
   </body>
 </html>
