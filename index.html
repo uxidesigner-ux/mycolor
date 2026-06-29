@@ -8,7 +8,7 @@
     <title>MOI — 데일리 퍼스널 스타일리스트</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=0.2.5" />
+    <link rel="stylesheet" href="styles.css?v=0.2.6" />
   </head>
   <body class="is-splashing">
     <noscript><style>.splash-screen{display:none}</style></noscript>
@@ -20,40 +20,43 @@
         <p>Daily personal stylist</p>
       </div>
       <div class="splash-loading-bar" aria-hidden="true"><span></span></div>
-      <p class="splash-version" id="splash-version">v0.2.5</p>
+      <p class="splash-version" id="splash-version">v0.2.6</p>
     </div>
 
-    <header class="site-header">
-      <a class="brand" href="#home" aria-label="MOI 홈">
-        <span class="brand-mark">M</span>
-        <span>MOI</span>
-      </a>
-      <button class="header-link" id="saved-report-button" type="button" hidden>
-        저장된 스타일 보기
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
-      </button>
-    </header>
+    <main class="app-shell">
+      <aside class="app-aside" aria-hidden="true">
+        <p class="app-aside-kicker">MOI</p>
+        <h2 class="app-aside-title">사진 한 장으로<br />오늘의 스타일을 정리해요.</h2>
+        <p class="app-aside-lead">얼굴형·퍼스널컬러·무드를 바탕으로 헤어·뷰티·그루밍·옷·관리까지, 매일 바로 쓰는 추천을 만들어요.</p>
+        <ul class="app-aside-list">
+          <li><strong>사진 또는 직접 선택</strong><span>원하는 방식으로 시작</span></li>
+          <li><strong>AI 제안 + 내가 확정</strong><span>결과는 언제든 직접 수정</span></li>
+          <li><strong>사진은 저장하지 않음</strong><span>분석 후 기기에만 보관</span></li>
+        </ul>
+        <p class="app-aside-foot">오른쪽 화면에서 바로 시작해 보세요.</p>
+      </aside>
 
-    <main>
-      <section class="screen landing-screen start-screen is-active" id="home-screen" data-screen="home" aria-labelledby="home-title">
-        <aside class="start-explainer" aria-hidden="true">
-          <p class="start-explainer-kicker">MOI</p>
-          <h2 class="start-explainer-title">사진 한 장으로<br />오늘의 스타일을 정리해요.</h2>
-          <p class="start-explainer-lead">얼굴형·퍼스널컬러·무드를 바탕으로 헤어·뷰티·그루밍·옷·관리까지, 매일 바로 쓰는 추천을 만들어요.</p>
-          <ul class="start-explainer-list">
-            <li><strong>사진 또는 직접 선택</strong><span>원하는 방식으로 시작</span></li>
-            <li><strong>AI 제안 + 내가 확정</strong><span>결과는 언제든 직접 수정</span></li>
-            <li><strong>사진은 저장하지 않음</strong><span>분석 후 기기에만 보관</span></li>
-          </ul>
-          <p class="start-explainer-foot">오른쪽 화면에서 바로 시작해 보세요.</p>
-        </aside>
-        <section class="start-mobile-app" aria-label="MOI 시작 화면">
+      <div class="device-frame">
+        <header class="site-header">
+          <a class="brand" href="#home" aria-label="MOI 홈">
+            <span class="brand-mark">M</span>
+            <span>MOI</span>
+          </a>
+          <button class="header-link" id="saved-report-button" type="button" hidden>
+            저장된 스타일 보기
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          </button>
+        </header>
+
+        <div class="device-stage">
+          <section class="screen landing-screen start-screen is-active" id="home-screen" data-screen="home" aria-labelledby="home-title">
+            <div class="start-mobile-app" aria-label="MOI 시작 화면">
           <div class="start-appbar">
             <div>
               <p class="start-kicker">MOI</p>
               <h1 id="home-title">스타일 시작</h1>
             </div>
-            <span class="start-version" id="start-version">v0.2.5</span>
+            <span class="start-version" id="start-version">v0.2.6</span>
             <button class="start-icon-button photo-start-button" type="button" data-pick-immediately="true" aria-label="사진 등록">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5 7 6h10l2 2.5h1.5A2.5 2.5 0 0 1 23 11v7.5A2.5 2.5 0 0 1 20.5 21h-17A2.5 2.5 0 0 1 1 18.5V11a2.5 2.5 0 0 1 2.5-2.5H5Z"/><circle cx="12" cy="14" r="4"/></svg>
             </button>
@@ -82,23 +85,23 @@
             </button>
           </div>
 
-          <p class="photo-availability-note" id="photo-availability-note">사진 분석을 사용할 수 없으면 직접 선택으로 같은 리포트를 만들 수 있어요.</p>
-
-          <nav class="start-floating-nav" aria-label="홈 탐색">
-            <div class="start-nav-cluster">
-              <button class="start-nav-item is-active" type="button" aria-current="page">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9Z"/></svg>
-                <span>홈</span>
-              </button>
-              <button class="start-nav-item saved-inline-button" id="saved-report-inline-button" type="button" hidden>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7.5c0 5-8 10.5-8 10.5S4 12.5 4 7.5A4.2 4.2 0 0 1 12 5a4.2 4.2 0 0 1 8 2.5Z"/></svg>
-                <span>저장</span>
-              </button>
+              <p class="photo-availability-note" id="photo-availability-note">사진 분석을 사용할 수 없으면 직접 선택으로 같은 리포트를 만들 수 있어요.</p>
             </div>
-            <button class="start-nav-add start-chooser-button" type="button" aria-label="새 스타일 시작">+</button>
-          </nav>
-        </section>
-      </section>
+
+            <nav class="start-floating-nav" aria-label="홈 탐색">
+              <div class="start-nav-cluster">
+                <button class="start-nav-item is-active" type="button" aria-current="page">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9Z"/></svg>
+                  <span>홈</span>
+                </button>
+                <button class="start-nav-item saved-inline-button" id="saved-report-inline-button" type="button" hidden>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7.5c0 5-8 10.5-8 10.5S4 12.5 4 7.5A4.2 4.2 0 0 1 12 5a4.2 4.2 0 0 1 8 2.5Z"/></svg>
+                  <span>저장</span>
+                </button>
+              </div>
+              <button class="start-nav-add start-chooser-button" type="button" aria-label="새 스타일 시작">+</button>
+            </nav>
+          </section>
 
       <section class="screen analysis-screen" id="analysis-screen" data-screen="analysis" aria-labelledby="analysis-title">
         <div class="analysis-shell">
@@ -413,29 +416,30 @@
           </button>
         </div>
       </section>
-    </main>
+          <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
-    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-
-    <div class="bottom-sheet" id="bottom-sheet" hidden>
-      <button class="sheet-backdrop" id="sheet-backdrop" type="button" aria-label="시트 닫기"></button>
-      <section class="bottom-sheet-panel" id="bottom-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title" aria-describedby="sheet-description" tabindex="-1">
-        <button class="sheet-grabber" id="sheet-grabber" type="button" aria-label="아래로 끌어 닫기"><span></span></button>
-        <div class="sheet-header">
-          <div>
-            <p class="sheet-kicker" id="sheet-kicker">MOI</p>
-            <h2 id="sheet-title">안내</h2>
+          <div class="bottom-sheet" id="bottom-sheet" hidden>
+            <button class="sheet-backdrop" id="sheet-backdrop" type="button" aria-label="시트 닫기"></button>
+            <section class="bottom-sheet-panel" id="bottom-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title" aria-describedby="sheet-description" tabindex="-1">
+              <button class="sheet-grabber" id="sheet-grabber" type="button" aria-label="아래로 끌어 닫기"><span></span></button>
+              <div class="sheet-header">
+                <div>
+                  <p class="sheet-kicker" id="sheet-kicker">MOI</p>
+                  <h2 id="sheet-title">안내</h2>
+                </div>
+                <button class="sheet-close" id="sheet-close" type="button" aria-label="닫기">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+                </button>
+              </div>
+              <p class="sheet-description" id="sheet-description"></p>
+              <div class="sheet-body" id="sheet-body"></div>
+              <div class="sheet-actions" id="sheet-actions"></div>
+            </section>
           </div>
-          <button class="sheet-close" id="sheet-close" type="button" aria-label="닫기">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
-          </button>
         </div>
-        <p class="sheet-description" id="sheet-description"></p>
-        <div class="sheet-body" id="sheet-body"></div>
-        <div class="sheet-actions" id="sheet-actions"></div>
-      </section>
-    </div>
-    <script src="config.js?v=0.2.5"></script>
-    <script src="app.js?v=0.2.5"></script>
+      </div>
+    </main>
+    <script src="config.js?v=0.2.6"></script>
+    <script src="app.js?v=0.2.6"></script>
   </body>
 </html>

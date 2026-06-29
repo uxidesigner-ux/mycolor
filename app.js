@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.5";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.6";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -846,13 +846,27 @@ function syncHash(name) {
   history.replaceState(null, "", name === "home" ? "#home" : `#${name}`);
 }
 
+// Each screen scrolls inside the device frame (not the window). Scroll the
+// active screen's own scroll container back to the top.
+function scrollActiveTop(behavior = "auto") {
+  const targets = [
+    document.querySelector(".analysis-screen.is-active .analysis-shell"),
+    document.querySelector(".quiz-screen.is-active .quiz-shell"),
+    document.querySelector("#home-screen.is-active .start-mobile-app"),
+    document.querySelector(".result-screen.is-active"),
+  ];
+  for (const target of targets) {
+    target?.scrollTo?.({ top: 0, behavior });
+  }
+}
+
 function setBase(name) {
   screens.forEach((screen) => {
     if (SCREEN_KIND[screen.dataset.screen] === "base") {
       screen.classList.toggle("is-active", screen.dataset.screen === name);
     }
   });
-  window.scrollTo({ top: 0, behavior: "instant" });
+  scrollActiveTop();
   syncHash(name);
 }
 
@@ -898,7 +912,7 @@ function showAnalysisStage(name) {
     stage.classList.toggle("is-active", active);
   });
   document.querySelector("#analysis-back").setAttribute("aria-label", name === "guide" ? "홈으로" : "이전 단계");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  scrollActiveTop("smooth");
 }
 
 function syncPhotoAvailability() {
@@ -1905,7 +1919,7 @@ nextButton.addEventListener("click", () => {
   if (currentStep < steps.length - 1) {
     currentStep += 1;
     refreshStep();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollActiveTop("smooth");
   } else {
     completeProfile();
   }

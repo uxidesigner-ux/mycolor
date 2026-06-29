@@ -1037,3 +1037,44 @@
   - Impeccable detector:
     - 기존 레거시 CSS advisory 89건은 남아 있음.
     - 새 v0.2.5 추천 기준 UI 블록(`styles.css` 4200 이후)은 advisory 0건 확인.
+
+## 2026-06-29 KST — v0.2.6 데스크톱 디바이스 프레임 셸 재구축
+
+- 요청: 데스크톱에서 RoutineDiary 레이아웃처럼 왼쪽 서비스 소개 + 오른쪽 모바일 프레임 구성으로, 모든 기능이 프레임 안에서만 동작하도록. 기존엔 소개가 위·프레임이 아래로 쌓이고 바텀시트가 프레임보다 크게 동작하는 등 견고하지 않았다. 화면 크기별 분석 + 개선 방향 제안 후 진행.
+- 버전:
+  - `0.2.5` → `0.2.6`
+- 선행(분석·제안):
+  - 근본 원인 진단: 지속되는 프레임 컨테이너 부재. 4개 화면(home/analysis/quiz/result)이 각자 다른 width 로직을 가진 `<main>` 직속 형제이고, 오버레이(플로우 시트·바텀시트)는 프레임이 아니라 뷰포트 기준으로 떠 있었다.
+    - 홈: v0.2.2의 2단 데스크톱 그리드(`styles.css:2317`)를 v0.2.3 cascade(`:3164`)가 단일 컬럼으로 덮어써 소개가 위·프레임이 아래로 쌓임.
+    - 분석/퀴즈: `position:fixed; inset:0` 뷰포트 오버레이(468px 중앙)라 우측 프레임과 무관하게 화면 중앙에서 슬라이드업.
+    - 결과: `width:min(100%,960px)` 별개 풀폭 레이아웃 → 폰 프레임 이탈.
+    - 바텀시트: `position:fixed` 640px 뷰포트 하단 → 프레임보다 큼.
+    - 죽은 규칙(`.start-phone*`)·혼재 브레이크포인트로 취약.
+  - 제안: "단일 디바이스 프레임 셸". 두 결정 확정 — (1) 프레임 셸 재구축, (2) 왼쪽 소개 항상 고정.
+- 조치:
+  - `index.html` 구조 재편:
+    - `main.app-shell`(데스크톱 2단 grid / 모바일 단일).
+    - `.start-explainer`를 `#home-screen` 밖 지속 `aside.app-aside`로 이동.
+    - `.site-header`를 프레임 안으로 이동(프레임 상단 chrome). 모든 화면 + 토스트 + 바텀시트를 `.device-frame > .device-stage` 안으로 이동.
+    - 홈 floating 내비를 `.start-mobile-app`(스크롤러) 밖, `#home-screen` 직속으로 이동해 프레임 하단에 고정.
+  - `styles.css` 끝에 v0.2.6 "Device frame shell" 블록 추가(레이아웃 권한). 상위 스코프로 기존 충돌 규칙을 cascade로 정정:
+    - `.app-shell` 2단/단일, `.app-aside` 타이포, `.device-frame`(404px·둥근 모서리·내부 height) , `.device-stage`(overflow:hidden, 화면·오버레이 클립).
+    - base 화면 absolute fill + 내부 스크롤. 홈은 비스크롤 래퍼 + 내부 앱 스크롤 + 내비 고정. result 960px → 프레임 폭.
+    - 플로우 시트/바텀시트/토스트/홈 내비를 `position:absolute`로 프레임 기준 재배치.
+    - 프레임은 항상 좁으므로(~404px) 결과 요약·분석 다단 그리드를 프레임 안에서 항상 단일/모바일 레이아웃으로 강제(데스크톱 cramping 방지).
+    - 단일 브레이크포인트(860px)로 데스크톱 2단 ↔ 모바일 풀스크린 전환.
+  - `app.js`: `window.scrollTo` → `scrollActiveTop()`(활성 화면의 프레임 내부 스크롤 컨테이너 top) 헬퍼로 교체.
+  - `DESIGN.md`에 App Shell(Device Frame) 원칙 추가, Functional Home 데스크톱 설명 갱신.
+- 파일:
+  - `DESIGN.md`, `WORKLOG.md`, `app.js`, `config.js`, `index.html`, `package.json`, `styles.css`
+- 검증:
+  - `git diff --check` 통과.
+  - `npm run check` 통과(`Version verified: 0.2.6`).
+  - `npm run verify` 통과(`Configured app version: 0.2.6`, Worker contract verified, build OK). test:worker의 OpenAI 429는 기존 계약 검증 케이스.
+  - Playwright(Chromium) 자동 캡처:
+    - 데스크톱 1280×860: 홈 = 왼쪽 소개 + 오른쪽 폰 프레임, 홈 내비 프레임 하단 고정.
+    - 데스크톱: 직접 선택 → 퀴즈 시트가 프레임 안에서 슬라이드업·클립(프레임 초과 없음), 홈 뒤 scale-down.
+    - 데스크톱: `+` 시작 선택 바텀시트도 프레임 안에서 클립.
+    - 데스크톱: 퀴즈 완료 → 결과가 프레임 안에서 렌더·내부 스크롤(헤더 고정), 요약 그리드 단일 컬럼으로 정리.
+    - 모바일 390×844: 프레임 풀스크린, 소개 숨김, 내비 고정.
+    - 콘솔 error 0건(외부 Pexels 이미지 차단 로그는 샌드박스 네트워크 제약).

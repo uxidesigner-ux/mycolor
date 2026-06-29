@@ -4273,3 +4273,227 @@ body.is-flow-in .quiz-shell {
     transform: scale(1.01);
   }
 }
+
+/* ============================================================
+   v0.2.6 — Device frame shell (layout authority)
+   RoutineDiary-style desktop: a persistent left intro (.app-aside)
+   beside a fixed phone frame (.device-frame). EVERY screen and
+   overlay — base screens, flow sheets, bottom sheet, toast, home
+   nav — lives INSIDE .device-stage and is clipped to the frame, so
+   the frame is the single source of truth for app width.
+   This block is intentionally scoped under the new ancestors so it
+   wins the cascade over the earlier per-screen width/position rules.
+   Breakpoint: one switch at 860px (desktop split <-> full-screen).
+   ============================================================ */
+
+/* --- Page shell ------------------------------------------- */
+main.app-shell {
+  --shell-pad: clamp(20px, 4vw, 48px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(28px, 6vw, 88px);
+  width: 100%;
+  max-width: 1180px;
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: var(--shell-pad);
+  box-sizing: border-box;
+}
+
+/* Keep the page shell still while a sheet is open (no whole-page scale). */
+body.is-sheet-open main.app-shell { transform: none; filter: none; }
+body:has(#home-screen.is-active) main.app-shell { min-height: 100svh; }
+
+/* --- Left intro ------------------------------------------- */
+.app-aside {
+  display: grid;
+  gap: 20px;
+  align-content: center;
+  justify-self: end;
+  max-width: 440px;
+}
+.app-aside-kicker { margin: 0; color: var(--muted); font-size: 13px; font-weight: 900; letter-spacing: 0.04em; }
+.app-aside-title { margin: 0; color: var(--ink); font-size: clamp(32px, 3.2vw, 50px); line-height: 1.1; letter-spacing: -0.04em; font-weight: 800; }
+.app-aside-lead { max-width: 38ch; margin: 0; color: var(--muted-strong); font-size: 16px; line-height: 1.7; }
+.app-aside-list { display: grid; gap: 13px; margin: 4px 0 0; padding: 0; list-style: none; }
+.app-aside-list li { position: relative; display: grid; gap: 2px; padding-left: 18px; }
+.app-aside-list li::before { content: ""; position: absolute; left: 0; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
+.app-aside-list strong { color: var(--ink); font-size: 15px; }
+.app-aside-list span { color: var(--muted); font-size: 13px; }
+.app-aside-foot { margin: 4px 0 0; color: var(--muted); font-size: 13px; font-weight: 700; }
+
+/* --- Phone frame ------------------------------------------ */
+.device-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 404px;
+  max-width: 100%;
+  height: min(880px, calc(100svh - 2 * var(--shell-pad)));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 38px;
+  background: var(--white);
+  box-shadow: 0 44px 90px -52px rgba(17, 17, 17, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Frame top chrome (brand + saved). Hidden on home, which has its own appbar. */
+.device-frame > .site-header {
+  position: relative;
+  z-index: 6;
+  flex: 0 0 auto;
+  height: 54px;
+  max-width: none;
+  margin: 0;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--glass-hairline);
+  background: var(--glass-tint-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* The stage clips every screen + overlay to the frame. */
+.device-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* --- Screens inside the stage ----------------------------- */
+.device-stage > .screen.is-active {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+/* Home: non-scrolling wrapper; inner app scrolls; nav pinned to frame. */
+.device-stage > #home-screen.is-active { display: block; overflow: hidden; padding: 0; }
+.device-stage > #home-screen .start-mobile-app {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 0;
+  border-radius: 0;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(104px + var(--safe-bottom));
+}
+.device-stage > #home-screen .start-floating-nav {
+  position: absolute;
+  top: auto;
+  bottom: calc(14px + var(--safe-bottom));
+  left: 50%;
+  right: auto;
+  z-index: 9;
+  width: calc(100% - 28px);
+  transform: translateX(-50%);
+}
+
+/* Result (and other base scrollers): scroll inside the frame. */
+.device-stage > .result-screen.is-active {
+  display: block;
+  width: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 28px 20px calc(44px + var(--safe-bottom));
+}
+
+/* Flow overlays (analysis/quiz): anchor to the frame, not the viewport. */
+.device-stage > .analysis-screen.is-active,
+.device-stage > .quiz-screen.is-active {
+  position: absolute;
+}
+.device-stage .analysis-shell,
+.device-stage .quiz-shell {
+  width: 100%;
+  max-width: none;
+  max-height: 94%;
+}
+
+/* Bottom sheet: clipped to the frame, frame-width panel. */
+.device-stage .bottom-sheet { position: absolute; }
+.device-stage .bottom-sheet-panel {
+  width: 100%;
+  max-width: none;
+  max-height: min(78%, 560px);
+}
+.device-stage .bottom-sheet.is-large .bottom-sheet-panel { max-height: calc(100% - 14px); }
+
+/* Toast: float near the frame bottom (no viewport -50% shift). */
+.device-stage .toast {
+  position: absolute;
+  z-index: 60;
+  left: 16px;
+  right: 16px;
+  bottom: calc(18px + var(--safe-bottom));
+  transform: translateY(12px);
+}
+.device-stage .toast.is-visible { transform: translateY(0); }
+
+/* --- In-frame content is always narrow -------------------- */
+/* The frame is ~404px on desktop and full-width on mobile, so the
+   desktop multi-column layouts never fit. Apply the narrow layout to
+   in-frame content on every viewport so desktop never shows cramped
+   grids or oversized headings inside the phone frame. */
+.device-stage .result-summary-grid,
+.device-stage .photo-onboarding-grid,
+.device-stage .preview-grid,
+.device-stage .analysis-loading-layout,
+.device-stage .area-setting-card { grid-template-columns: 1fr; }
+
+.device-stage .review-intro { grid-template-columns: 1fr; gap: 28px; }
+.device-stage .preview-grid { gap: 28px; }
+.device-stage .analysis-loading-layout { min-height: 0; gap: 44px; }
+
+.device-stage .review-option-grid,
+.device-stage .color-review-grid,
+.device-stage .mood-review-grid { grid-template-columns: repeat(2, 1fr); }
+.device-stage .finish-fields { grid-template-columns: 1fr; gap: 0; }
+.device-stage .face-grid { grid-template-columns: repeat(2, 1fr); }
+
+.device-stage .result-hero { min-height: 0; padding: 22px; }
+.device-stage .result-hero-copy h2 { font-size: 30px; }
+.device-stage .confidence-card { grid-template-columns: 82px 1fr; padding: 18px; }
+
+.device-stage .analysis-heading h1,
+.device-stage .review-intro h1,
+.device-stage .analysis-error-card h1,
+.device-stage .loading-copy h1 { font-size: 40px; }
+.device-stage .quiz-step legend { font-size: 34px; }
+
+/* --- Desktop ambient field behind the frame --------------- */
+@media (min-width: 861px) {
+  main.app-shell {
+    background:
+      radial-gradient(46% 38% at 12% 8%, rgba(120, 150, 255, 0.07), transparent 60%),
+      radial-gradient(44% 36% at 90% 96%, rgba(255, 160, 140, 0.06), transparent 60%);
+  }
+}
+
+/* --- Mobile: frame goes full-screen, intro hides ---------- */
+@media (max-width: 860px) {
+  main.app-shell {
+    display: block;
+    max-width: none;
+    min-height: 100svh;
+    margin: 0;
+    padding: 0;
+    background: none;
+  }
+  .app-aside { display: none; }
+  .device-frame {
+    width: 100%;
+    max-width: none;
+    height: 100svh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
