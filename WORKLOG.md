@@ -1103,3 +1103,13 @@
   - `npm run verify` 통과(`Version verified: 0.2.7`, Worker contract verified, build OK).
   - Playwright(Chromium) 캡처: 데스크톱 홈 로그아웃(좌 `G 로그인`, 우 새로고침/공유), 시뮬레이트 로그인(아바타+이름 다크 pill, 저장 아이콘 숨김 확인), 모바일. 콘솔 error 0건.
   - 주의: 실제 구글 로그인은 승인된 원본이 `github.io`라 라이브에서만 동작(샌드박스/로컬은 origin 불일치로 미동작). OAuth 동의 화면이 테스트 모드면 테스트 사용자만 로그인 가능.
+
+## 2026-06-29 KST — v0.2.8 빌드 config에서 googleClientId 누락 수정
+
+- 증상: 라이브에서 로그인 클릭 시 "구글 로그인 설정(Client ID)이 아직 없어요" 토스트.
+- 원인: `scripts/build.mjs`가 배포용 `dist/config.js`를 새로 생성하면서 `analysisEndpoint`/`photoAnalysisEnabled`/`demoMode`/`appVersion`만 넣고 `googleClientId`를 누락 → 라이브 config.js에 Client ID 없음 → 런타임 `GOOGLE_CLIENT_ID` 빈 값.
+- 버전: `0.2.7` → `0.2.8` (config.js 캐시 버스팅 위해 필수 — 기존 `config.js?v=0.2.7`이 Client ID 없이 캐시됨).
+- 조치:
+  - `scripts/build.mjs`: 소스 `config.js`에서 `googleClientId`를 정규식으로 읽어 production config에 포함(`process.env.MOI_GOOGLE_CLIENT_ID` 우선, 없으면 소스 값). 단일 출처 유지.
+  - 전 파일 버전 0.2.8로 동기화.
+- 검증: `npm run verify` 통과(`Version verified: 0.2.8`). `dist/config.js`에 `googleClientId` 포함 확인.
