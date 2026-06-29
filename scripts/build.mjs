@@ -15,11 +15,20 @@ for (const file of files) {
 
 const analysisEndpoint = process.env.MOI_ANALYSIS_ENDPOINT?.trim();
 const photoAnalysisEnabled = Boolean(analysisEndpoint) && process.env.MOI_PHOTO_ANALYSIS_ENABLED !== "false";
+
+// Google OAuth Client ID is a public value. Source it from the env var if set,
+// otherwise carry over the value committed in the source config.js so the build
+// does not drop it.
+const sourceConfig = await readFile(resolve(root, "config.js"), "utf8");
+const sourceClientId = sourceConfig.match(/googleClientId:\s*"([^"]*)"/)?.[1] ?? "";
+const googleClientId = process.env.MOI_GOOGLE_CLIENT_ID?.trim() || sourceClientId;
+
 const productionConfig = `window.MOI_CONFIG = ${JSON.stringify({
   analysisEndpoint: analysisEndpoint ?? "",
   photoAnalysisEnabled,
   demoMode: false,
-  appVersion: packageInfo.version
+  appVersion: packageInfo.version,
+  googleClientId
 }, null, 2)};\n`;
 await writeFile(resolve(output, "config.js"), productionConfig, "utf8");
 
