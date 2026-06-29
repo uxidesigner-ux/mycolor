@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.11";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.12";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -1462,6 +1462,161 @@ function renderHeading(category) {
   return `<div class="content-heading"><h2>${title}</h2><p>${description}</p></div>`;
 }
 
+// --- Weather (Open-Meteo, client-only, no API key) --------------------------
+// Weather modulates only the daily "오늘" layer: a chip + a few adjustment
+// notes over the fixed identity recommendations.
+const WEATHER_CACHE_KEY = "moi-weather-v1";
+const WEATHER_TTL_MS = 60 * 60 * 1000;
+let weatherState = { status: "idle", data: null }; // idle|loading|ready|error|denied
+
+function weatherCondition(code) {
+  if (code === 0) return { emoji: "☀️", label: "맑음" };
+  if (code <= 2) return { emoji: "🌤️", label: "구름 조금" };
+  if (code === 3) return { emoji: "☁️", label: "흐림" };
+  if (code === 45 || code === 48) return { emoji: "🌫️", label: "안개" };
+  if (code >= 51 && code <= 57) return { emoji: "🌦️", label: "이슬비" };
+  if (code >= 61 && code <= 67) return { emoji: "🌧️", label: "비" };
+  if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return { emoji: "❄️", label: "눈" };
+  if (code >= 80 && code <= 82) return { emoji: "🌧️", label: "소나기" };
+  if (code >= 95) return { emoji: "⛈️", label: "뇌우" };
+  return { emoji: "🌡️", label: "오늘 날씨" };
+}
+
+function readCachedWeather() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY));
+    if (raw && Date.now() - raw.fetchedAt < WEATHER_TTL_MS) return raw;
+  } catch {}
+  return null;
+}
+
+function getGeolocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error("unsupported"));
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      (err) => reject(err),
+      { timeout: 8000, maximumAge: 10 * 60 * 1000 }
+    );
+  });
+}
+
+async function geocodeArea(area) {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(area)}&count=1&language=ko&format=json`;
+  const res = await fetch(url);
+  const json = await res.json();
+  const hit = json?.results?.[0];
+  if (!hit) throw new Error("geocode-miss");
+  return { lat: hit.latitude, lon: hit.longitude, place: hit.name };
+}
+
+async function fetchWeather(lat, lon, place, source) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
+    + `&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m`
+    + `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max`
+    + `&timezone=auto&forecast_days=1`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("forecast-failed");
+  const j = await res.json();
+  const c = j.current, d = j.daily;
+  return {
+    fetchedAt: Date.now(),
+    source,
+    place: place || "내 위치",
+    temp: Math.round(c.temperature_2m),
+    humidity: Math.round(c.relative_humidity_2m),
+    precip: c.precipitation,
+    code: c.weather_code,
+    wind: Math.round(c.wind_speed_10m),
+    tMax: Math.round(d.temperature_2m_max[0]),
+    tMin: Math.round(d.temperature_2m_min[0]),
+    precipProb: d.precipitation_probability_max?.[0] ?? null,
+    uv: d.uv_index_max?.[0] != null ? Math.round(d.uv_index_max[0]) : null
+  };
+}
+
+function setWeatherState(next) {
+  weatherState = next;
+  refreshWeatherUI();
+}
+
+async function loadWeather({ source }) {
+  setWeatherState({ status: "loading" });
+  try {
+    let coords, place;
+    if (source === "geo") {
+      coords = await getGeolocation();
+      place = state.area?.trim() || "내 위치";
+    } else {
+      const area = state.area?.trim();
+      if (!area) return setWeatherState({ status: "idle" });
+      const g = await geocodeArea(area);
+      coords = { lat: g.lat, lon: g.lon };
+      place = g.place;
+    }
+    const data = await fetchWeather(coords.lat, coords.lon, place, source);
+    try { localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(data)); } catch {}
+    setWeatherState({ status: "ready", data });
+  } catch (err) {
+    setWeatherState({ status: err?.code === 1 ? "denied" : "error" });
+  }
+}
+
+function ensureWeather() {
+  if (weatherState.status === "ready" || weatherState.status === "loading") return;
+  const cached = readCachedWeather();
+  if (cached) return setWeatherState({ status: "ready", data: cached });
+  if (state.area?.trim()) loadWeather({ source: "area" });
+}
+
+function weatherAdvice(w) {
+  const notes = [];
+  const wet = (w.precipProb ?? 0) >= 50 || w.precip > 0 || (w.code >= 51 && w.code <= 82) || w.code >= 95;
+  if (w.humidity >= 70 || wet) notes.push({ tag: "헤어", text: "습기·비로 흐트러지기 쉬워요. 세팅력 있는 픽이나 반묶음으로 단정하게." });
+  else if (w.humidity <= 30) notes.push({ tag: "헤어", text: "건조해 정전기가 나기 쉬워요. 오일·미스트로 윤기를 더하세요." });
+  else if (w.wind >= 25) notes.push({ tag: "헤어", text: "바람이 강해요. 흘러내리지 않게 고정력을 높이세요." });
+  if (w.temp >= 27 || w.humidity >= 75) notes.push({ tag: "뷰티", text: "덥고 습해요. 가벼운 베이스 + 지속력·땀 방지 픽으로." });
+  else if (w.temp <= 8) notes.push({ tag: "뷰티", text: "춥고 건조해요. 보습 베이스와 립밤으로 결을 채우세요." });
+  if ((w.uv ?? 0) >= 6) notes.push({ tag: "자외선", text: `자외선 지수 ${w.uv}. 자외선 차단을 꼼꼼히 발라주세요.` });
+  if (w.temp <= 9) notes.push({ tag: "옷", text: "쌀쌀해요. 보온 레이어와 가벼운 아우터를 더하세요." });
+  else if (w.temp >= 27) notes.push({ tag: "옷", text: "더워요. 통기성 좋은 가벼운 소재로 시원하게." });
+  if (wet) notes.push({ tag: "옷", text: "비 소식이 있어요. 발수 아우터·방수 신발을 챙기세요." });
+  return notes.slice(0, 4);
+}
+
+function renderWeatherInner() {
+  const s = weatherState;
+  if (s.status === "loading") {
+    return `<div class="weather-chip is-loading"><span class="weather-spinner" aria-hidden="true"></span><span>오늘 날씨를 불러오는 중…</span></div>`;
+  }
+  if (s.status === "ready" && s.data) {
+    const w = s.data;
+    const c = weatherCondition(w.code);
+    const notes = weatherAdvice(w);
+    return `
+      <div class="weather-chip">
+        <span class="weather-emoji" aria-hidden="true">${c.emoji}</span>
+        <div class="weather-main">
+          <strong>${w.temp}°<span> · ${c.label}</span></strong>
+          <small>${escapeHtml(w.place)} · ↑${w.tMax}° ↓${w.tMin}° · 습도 ${w.humidity}%${w.uv != null ? ` · 자외선 ${w.uv}` : ""}</small>
+        </div>
+        <button class="weather-refresh" type="button" data-weather-action="refresh" aria-label="날씨 새로고침">↻</button>
+      </div>
+      ${notes.length ? `<ul class="weather-notes">${notes.map((n) => `<li><span class="weather-note-tag">${n.tag}</span>${escapeHtml(n.text)}</li>`).join("")}</ul>` : ""}
+    `;
+  }
+  if (s.status === "denied" || s.status === "error") {
+    const msg = s.status === "denied" ? "위치 권한이 없어 날씨를 못 가져왔어요." : "날씨를 불러오지 못했어요.";
+    return `<button class="weather-cta" type="button" data-weather-action="locate"><span aria-hidden="true">📍</span> ${msg} 다시 시도</button>`;
+  }
+  return `<button class="weather-cta" type="button" data-weather-action="locate"><span aria-hidden="true">📍</span> 오늘 날씨에 맞춰 추천 받기</button>`;
+}
+
+function refreshWeatherUI() {
+  const el = document.querySelector("#today-weather");
+  if (el) el.innerHTML = renderWeatherInner();
+}
+
 function renderToday() {
   const { color, mood, target, hair, hairTip, fringe, outfit, beautyAction } = styleGuide();
   const area = areaLabel();
@@ -1469,6 +1624,7 @@ function renderToday() {
   const beautyVisuals = getStyleVisualGroup("beauty", state.personalColor);
   const outfitVisuals = getStyleVisualGroup("outfit", state.personalColor);
   return `${renderHeading("today")}
+    <section id="today-weather" class="weather-block" aria-label="오늘 날씨 맞춤">${renderWeatherInner()}</section>
     <article class="today-lead">
       <div class="today-lead-copy">
         <span class="card-kicker">${mood.english.toUpperCase()}</span>
@@ -1652,6 +1808,7 @@ function renderCategory(category) {
   recommendationContent.innerHTML = renderers[category]();
   recommendationContent.style.animation = "none";
   requestAnimationFrame(() => { recommendationContent.style.animation = ""; });
+  if (category === "today") ensureWeather();
 }
 
 function showToast(message, { duration = 2400 } = {}) {
@@ -2124,9 +2281,14 @@ document.addEventListener("click", (event) => {
 });
 
 recommendationContent.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-map-query]");
-  if (!button) return;
-  openMapSearch(button.dataset.mapQuery);
+  const mapButton = event.target.closest("[data-map-query]");
+  if (mapButton) return openMapSearch(mapButton.dataset.mapQuery);
+  const weatherButton = event.target.closest("[data-weather-action]");
+  if (weatherButton) {
+    const action = weatherButton.dataset.weatherAction;
+    const source = action === "refresh" && weatherState.data?.source === "area" ? "area" : "geo";
+    loadWeather({ source });
+  }
 });
 
 saveAreaButton?.addEventListener("click", saveAreaFromResult);
