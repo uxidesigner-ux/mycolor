@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.13";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.14";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -710,6 +710,9 @@ function closeBottomSheet({ restoreFocus = true } = {}) {
 
 function renderSheetActions(actions = []) {
   sheetActionHandlers = new Map();
+  // The sheet already closes via the top-right X, grabber, and backdrop, so the
+  // redundant bottom "닫기" action is dropped (it was getting clipped at the bottom).
+  actions = actions.filter((action) => action.label !== "닫기");
   sheetActions.innerHTML = actions.map((action, index) => {
     const id = `sheet-action-${index}`;
     sheetActionHandlers.set(id, action.handler);
