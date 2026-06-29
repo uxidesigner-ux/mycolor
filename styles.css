@@ -4836,3 +4836,30 @@ body:has(#home-screen.is-active) .device-frame > .site-header { display: flex; }
 
 /* Hide an empty sheet action bar (e.g. after dropping the bottom 닫기). */
 .sheet-actions:empty { display: none; padding: 0; }
+
+/* ============================================================
+   v0.2.15 — Bottom nav alignment + open white header
+   ============================================================ */
+/* Bottom nav cluster matches the FAB height (58px) with wider, even,
+   easier-to-tap items. */
+.start-nav-cluster {
+  height: 58px;
+  padding: 0 6px;
+  gap: 4px;
+  box-sizing: border-box;
+}
+.start-nav-item {
+  min-width: 66px;
+  min-height: 0;
+  height: 46px;
+  padding: 0 10px;
+}
+
+/* Header: solid white (the glass tint read as a gray band) so the top
+   feels open and unified with the content. */
+.device-frame > .site-header {
+  background: var(--white);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-bottom: 1px solid var(--glass-hairline);
+}

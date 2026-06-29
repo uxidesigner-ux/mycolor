@@ -1170,3 +1170,10 @@
   - 결과 footer: `.device-stage .result-footer`를 block로(카피 위, 액션 아래), `.result-footer-actions`를 flex 가로 + 두 버튼 `flex:1`(동일 폭, nowrap, 아이콘 16px). 프레임 내(데스크톱) cramping 방지 위해 device-stage 스코프.
   - `.card-icon` font-size 14→16px + place-items center + line-height:1 (원형 안 글리프 중앙·확대).
 - 검증: `npm run verify` 통과(`Version verified: 0.2.14`). Playwright: 저장/공유 버튼 동일 폭 같은 행(176px, top 동일), 공유 시트에 닫기 없음·링크 복사 완전 표시, 콘솔 error 0건.
+
+## 2026-06-29 KST — v0.2.15 내비 정렬·헤더 화이트
+
+- 요청: 내비바 들쑥날쑥 → 가로 정렬·메뉴 너비 확대(오터치 방지)·높이 FAB와 동일. 스크롤 시 헤더·내비 고정. 헤더 윗부분 회색 → 화이트로 통일(개방감).
+- 진단: 내비 cluster 높이 76px ≠ FAB 58px. 헤더 배경 glass-tint-strong(반투명) → 회색 띠.
+- 조치(`styles.css` v0.2.15): `.start-nav-cluster` height 58px(=FAB), `.start-nav-item` min-width 58→66px·height 46px(균일·넓은 터치). `.device-frame > .site-header` 배경 화이트·blur 제거.
+- 검증: `npm run verify` 통과(`Version verified: 0.2.15`). Playwright: 내비 66×46 균일·cluster 58=FAB 58, 헤더 bg 화이트, 스크롤 전후 헤더·내비 고정. 콘솔 error 0건.
