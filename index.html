@@ -4,11 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
-    <meta name="description" content="얼굴형과 퍼스널 컬러를 바탕으로 오늘의 헤어, 메이크업, 옷을 추천하는 데일리 스타일리스트" />
+    <meta name="description" content="얼굴형과 퍼스널 컬러, 추천 기준을 바탕으로 오늘의 헤어, 뷰티·그루밍, 옷을 추천하는 데일리 스타일리스트" />
     <title>MOI — 데일리 퍼스널 스타일리스트</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=0.2.4" />
+    <link rel="stylesheet" href="styles.css?v=0.2.5" />
   </head>
   <body class="is-splashing">
     <noscript><style>.splash-screen{display:none}</style></noscript>
@@ -20,7 +20,7 @@
         <p>Daily personal stylist</p>
       </div>
       <div class="splash-loading-bar" aria-hidden="true"><span></span></div>
-      <p class="splash-version" id="splash-version">v0.2.4</p>
+      <p class="splash-version" id="splash-version">v0.2.5</p>
     </div>
 
     <header class="site-header">
@@ -39,7 +39,7 @@
         <aside class="start-explainer" aria-hidden="true">
           <p class="start-explainer-kicker">MOI</p>
           <h2 class="start-explainer-title">사진 한 장으로<br />오늘의 스타일을 정리해요.</h2>
-          <p class="start-explainer-lead">얼굴형·퍼스널컬러·무드를 바탕으로 헤어·메이크업·옷·관리까지, 매일 바로 쓰는 추천을 만들어요.</p>
+          <p class="start-explainer-lead">얼굴형·퍼스널컬러·무드를 바탕으로 헤어·뷰티·그루밍·옷·관리까지, 매일 바로 쓰는 추천을 만들어요.</p>
           <ul class="start-explainer-list">
             <li><strong>사진 또는 직접 선택</strong><span>원하는 방식으로 시작</span></li>
             <li><strong>AI 제안 + 내가 확정</strong><span>결과는 언제든 직접 수정</span></li>
@@ -53,7 +53,7 @@
               <p class="start-kicker">MOI</p>
               <h1 id="home-title">스타일 시작</h1>
             </div>
-            <span class="start-version" id="start-version">v0.2.4</span>
+            <span class="start-version" id="start-version">v0.2.5</span>
             <button class="start-icon-button photo-start-button" type="button" data-pick-immediately="true" aria-label="사진 등록">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5 7 6h10l2 2.5h1.5A2.5 2.5 0 0 1 23 11v7.5A2.5 2.5 0 0 1 20.5 21h-17A2.5 2.5 0 0 1 1 18.5V11a2.5 2.5 0 0 1 2.5-2.5H5Z"/><circle cx="12" cy="14" r="4"/></svg>
             </button>
@@ -230,6 +230,13 @@
               <div class="finish-fields">
                 <label class="text-field"><span>이름 또는 닉네임</span><input id="analysis-name-input" type="text" maxlength="12" placeholder="예: 모이" autocomplete="nickname" /></label>
               </div>
+              <p class="finish-label">추천 기준</p>
+              <div class="review-option-grid target-review-grid" data-review-group="styleTarget" aria-label="추천 기준 선택">
+                <button type="button" data-value="female"><strong>여성 기준</strong><small>메이크업·헤어·의상</small></button>
+                <button type="button" data-value="male"><strong>남성 기준</strong><small>헤어·그루밍·핏</small></button>
+                <button type="button" data-value="neutral"><strong>상관없음</strong><small>젠더리스 균형</small></button>
+              </div>
+              <p class="target-helper review-target-helper">사진으로 성별을 단정하지 않고, 내가 원하는 추천 기준을 직접 확정해요.</p>
               <p class="finish-label">오늘 원하는 무드</p>
               <div class="review-option-grid mood-review-grid" id="review-mood-options" data-review-group="mood">
                 <button type="button" data-value="clean"><strong>클린</strong><small>단정하고 맑은</small></button>
@@ -276,11 +283,20 @@
           <form id="style-form">
             <fieldset class="quiz-step" data-step="0">
               <legend id="quiz-title">먼저, 어떻게 불러드릴까요?</legend>
-              <p class="step-description">닉네임만 있으면 시작할 수 있어요. 활동 지역은 주변 숍을 볼 때 물어볼게요.</p>
+              <p class="step-description">닉네임만 있으면 시작할 수 있어요. 추천 기준은 결과의 표현과 상품군을 맞추는 용도예요.</p>
               <label class="text-field">
                 <span>이름 또는 닉네임</span>
                 <input id="name-input" name="name" type="text" maxlength="12" placeholder="예: 모이" autocomplete="nickname" />
               </label>
+              <div class="target-choice-block">
+                <p class="finish-label">추천 기준</p>
+                <div class="choice-grid target-grid" data-choice-group="styleTarget" aria-label="추천 기준 선택">
+                  <button class="choice-card target-choice" type="button" data-value="female"><strong>여성 기준</strong><small>메이크업·헤어·의상 중심</small></button>
+                  <button class="choice-card target-choice" type="button" data-value="male"><strong>남성 기준</strong><small>헤어·그루밍·핏 중심</small></button>
+                  <button class="choice-card target-choice" type="button" data-value="neutral"><strong>상관없음</strong><small>젠더리스 균형 추천</small></button>
+                </div>
+                <p class="target-helper">성별을 판단하는 항목이 아니라, 추천 문구와 쇼핑·관리 기준을 맞추기 위한 선택이에요.</p>
+              </div>
             </fieldset>
 
             <fieldset class="quiz-step" data-step="1" hidden>
@@ -315,7 +331,7 @@
 
             <fieldset class="quiz-step" data-step="3" hidden>
               <legend>요즘 끌리는 무드는?</legend>
-              <p class="step-description">오늘의 옷과 메이크업 분위기를 결정해요.</p>
+              <p class="step-description">오늘의 옷과 인상 분위기를 결정해요.</p>
               <div class="choice-grid mood-grid" data-choice-group="mood">
                 <button class="choice-card mood-choice" type="button" data-value="clean"><span>◯</span><strong>클린</strong><small>단정하고 맑은</small></button>
                 <button class="choice-card mood-choice" type="button" data-value="lovely"><span>ෆ</span><strong>러블리</strong><small>부드럽고 사랑스러운</small></button>
@@ -419,7 +435,7 @@
         <div class="sheet-actions" id="sheet-actions"></div>
       </section>
     </div>
-    <script src="config.js?v=0.2.4"></script>
-    <script src="app.js?v=0.2.4"></script>
+    <script src="config.js?v=0.2.5"></script>
+    <script src="app.js?v=0.2.5"></script>
   </body>
 </html>

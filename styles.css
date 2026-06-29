@@ -4196,6 +4196,74 @@ body.is-flow-in .quiz-shell {
   }
 }
 
+/* ============================================================
+   v0.2.5 — Style target UX
+   "Gender" is modeled as a recommendation target, not an
+   identity judgment. It tunes result language, visuals, and
+   shopping/grooming actions while keeping neutral as a safe default.
+   ============================================================ */
+
+.target-choice-block {
+  margin-top: 8px;
+}
+
+.target-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.target-choice {
+  min-height: 92px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.target-choice strong {
+  font-size: 16px;
+}
+
+.target-choice small {
+  line-height: 1.45;
+}
+
+.target-helper {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.profile-finish-section .finish-fields {
+  grid-template-columns: 1fr;
+}
+
+.target-review-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 10px;
+}
+
+.target-review-grid button {
+  min-height: 76px;
+  border-radius: var(--radius-md);
+}
+
+.review-target-helper {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 680px) {
+  .target-grid,
+  .target-review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .target-choice,
+  .target-review-grid button {
+    min-height: 74px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .visual-figure img {
     transition: none;

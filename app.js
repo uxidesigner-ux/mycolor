@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.4";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.5";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -169,8 +169,206 @@ const moods = {
   }
 };
 
+const styleTargets = {
+  female: {
+    label: "여성 기준",
+    hint: "메이크업·헤어·의상",
+    summary: "메이크업 컬러, 헤어 디테일, 의상 실루엣을 조금 더 섬세하게 맞춰요.",
+    title: "여성 스타일 기준",
+    beautyLabel: "메이크업",
+    beautyTitle: "뷰티 팔레트",
+    beautyDescription: "메이크업 컬러를 한 팔레트로 정리했어요",
+    nearShopQuery: "퍼스널 컬러 헤어 메이크업",
+    shoppingSuffix: "여성 코디",
+    careMakeupTitle: "메이크업 제품",
+    careNailTitle: "네일 · 페디",
+    shopLabel: "메이크업·네일숍"
+  },
+  male: {
+    label: "남성 기준",
+    hint: "헤어·그루밍·핏",
+    summary: "헤어 실루엣, 피부 톤 정리, 옷의 핏과 소재를 중심으로 맞춰요.",
+    title: "남성 스타일 기준",
+    beautyLabel: "그루밍",
+    beautyTitle: "그루밍 팔레트",
+    beautyDescription: "피부 톤, 눈썹, 립밤, 손 관리까지 실용적으로 정리했어요",
+    nearShopQuery: "남자 퍼스널 컬러 헤어 그루밍",
+    shoppingSuffix: "남성 코디",
+    careMakeupTitle: "그루밍 제품",
+    careNailTitle: "손 · 발 정리",
+    shopLabel: "헤어·그루밍숍",
+    hairByFace: {
+      oval: "소프트 리프컷 또는 가벼운 가르마",
+      round: "상단 볼륨을 살린 가르마·리젠트",
+      square: "모서리를 부드럽게 덜어낸 텍스처 크롭",
+      long: "옆 볼륨을 남긴 미디엄 가르마",
+      heart: "이마를 과하게 가리지 않는 댄디 리프",
+      unknown: "자연스러운 가르마 또는 소프트 리프컷"
+    },
+    fringeByFace: {
+      oval: "가볍게 넘기는 앞머리",
+      round: "이마를 살짝 여는 사이드 파트",
+      square: "각을 누그러뜨리는 텍스처 앞머리",
+      long: "이마 일부를 덮는 자연스러운 뱅",
+      heart: "윗볼륨을 낮춘 사이드뱅",
+      unknown: "얼굴선을 가볍게 여는 사이드 파트"
+    },
+    hairTipByFace: {
+      oval: "균형이 좋아 짧은 길이와 미디엄 모두 잘 맞아요. 오늘 무드에 맞춰 질감만 정리해도 충분해요.",
+      round: "윗부분에 높이를 만들고 옆 라인은 너무 둥글게 남기지 않으면 얼굴이 더 길고 가벼워 보여요.",
+      square: "옆머리와 턱선 주변의 각을 딱딱하게 세우기보다, 질감으로 부드럽게 풀어주는 편이 좋아요.",
+      long: "정수리만 높이는 스타일보다 옆 볼륨을 조금 남겨 세로 비율을 편안하게 맞춰보세요.",
+      heart: "윗부분만 과하게 풍성해지지 않게 하고, 이마와 턱선의 균형을 함께 보는 게 좋아요.",
+      unknown: "얼굴형을 특정하지 않고도 실패 확률이 낮은 자연스러운 가르마와 적당한 질감을 추천해요."
+    },
+    hairAvoidByFace: {
+      oval: "정수리만 과하게 세운 날카로운 볼륨",
+      round: "옆 볼륨이 둥글게 퍼지는 무거운 투블럭",
+      square: "턱선 각을 더 세게 보이게 하는 딱 끊긴 라인",
+      long: "세로감을 더 키우는 높은 포마드",
+      heart: "윗부분만 큰 볼륨과 짧은 옆 라인",
+      unknown: "얼굴 옆을 완전히 누르거나 가리는 극단적인 실루엣"
+    },
+    outfitByColor: {
+      spring: "아이보리 오버셔츠 + 라이트 데님",
+      summer: "스카이 블루 셔츠 + 그레이 슬랙스",
+      autumn: "카멜 니트 폴로 + 크림 치노",
+      winter: "화이트 티셔츠 + 네이비 재킷",
+      unknown: "화이트 셔츠 + 토프 치노"
+    },
+    pieceByMood: {
+      clean: "옥스퍼드 셔츠",
+      lovely: "부드러운 니트",
+      chic: "테일러드 재킷",
+      natural: "텍스처 니트 또는 오버셔츠"
+    },
+    detailByMood: {
+      clean: "얇은 시계와 깨끗한 스니커즈",
+      lovely: "라운드 안경이나 부드러운 니트 짜임",
+      chic: "블랙 벨트와 메탈 워치",
+      natural: "레더 또는 스웨이드 소품"
+    },
+    beautyByMood: {
+      clean: "정돈된 눈썹과 얇은 톤 보정, 무색 립밤",
+      lovely: "피부 결을 살린 보습과 부드러운 브라운 브로우",
+      chic: "선명한 눈썹 라인과 번들거림 없는 세미매트 피부",
+      natural: "수분감 있는 피부와 자연스러운 립밤, 손 정리"
+    }
+  },
+  neutral: {
+    label: "상관없음",
+    hint: "젠더리스 균형",
+    summary: "성별 표현을 강하게 타지 않는 헤어, 그루밍, 옷의 균형으로 추천해요.",
+    title: "젠더리스 기준",
+    beautyLabel: "뷰티·그루밍",
+    beautyTitle: "뷰티·그루밍 팔레트",
+    beautyDescription: "컬러와 결 정리를 부담 없이 쓸 수 있게 정리했어요",
+    nearShopQuery: "퍼스널 컬러 헤어 스타일링",
+    shoppingSuffix: "유니섹스 코디",
+    careMakeupTitle: "뷰티·그루밍 제품",
+    careNailTitle: "손 · 발 정리",
+    shopLabel: "헤어·스타일링숍",
+    outfitByColor: {
+      spring: "아이보리 셔츠 + 라이트 데님",
+      summer: "소프트 블루 셔츠 + 그레이 팬츠",
+      autumn: "카멜 니트 + 크림 팬츠",
+      winter: "화이트 셔츠 + 네이비 팬츠",
+      unknown: "아이보리 셔츠 + 토프 팬츠"
+    },
+    hairByFace: {
+      oval: "자연스러운 레이어 또는 가벼운 가르마",
+      round: "상단 볼륨과 열린 얼굴선의 레이어",
+      square: "각을 부드럽게 푸는 텍스처 레이어",
+      long: "옆 볼륨을 살린 미디엄 실루엣",
+      heart: "윗볼륨을 낮춘 소프트 레이어",
+      unknown: "자연스러운 레이어 또는 가벼운 가르마"
+    },
+    fringeByFace: {
+      oval: "가볍게 흐르는 앞머리/가르마",
+      round: "이마를 살짝 여는 사이드 라인",
+      square: "윤곽을 부드럽게 잇는 텍스처 라인",
+      long: "세로감을 낮추는 가벼운 앞선",
+      heart: "윗부분을 가볍게 정리한 사이드 라인",
+      unknown: "얼굴선을 가볍게 여는 사이드 라인"
+    },
+    pieceByMood: {
+      clean: "구조적인 셔츠",
+      lovely: "부드러운 니트",
+      chic: "직선적인 재킷",
+      natural: "텍스처가 있는 니트"
+    },
+    beautyByMood: {
+      clean: "정돈된 눈썹과 얇은 톤 정리, 맑은 립 케어",
+      lovely: "보습감 있는 피부와 부드러운 혈색, 과하지 않은 결",
+      chic: "선명한 브로우와 세미매트 피부, 차분한 립밤",
+      natural: "수분감 있는 피부와 자연스러운 립 케어, 손 정리"
+    }
+  }
+};
+
+const targetVisuals = {
+  male: {
+    face: {
+      oval: [{ id: "614810", alt: "자연스러운 가르마와 정돈된 남성 헤어 참고 사진", credit: "Pexels" }],
+      round: [{ id: "220453", alt: "상단 볼륨을 살린 남성 헤어 참고 사진", credit: "Pexels" }],
+      square: [{ id: "91227", alt: "텍스처가 살아 있는 짧은 남성 헤어 참고 사진", credit: "Pexels" }],
+      long: [{ id: "2379004", alt: "미디엄 길이의 남성 헤어 참고 사진", credit: "Pexels" }],
+      heart: [{ id: "1681010", alt: "이마를 자연스럽게 여는 남성 헤어 참고 사진", credit: "Pexels" }],
+      unknown: [{ id: "614810", alt: "실패 확률이 낮은 자연스러운 남성 헤어 참고 사진", credit: "Pexels" }]
+    },
+    hairColor: {
+      spring: [{ id: "614810", alt: "밝고 따뜻한 브라운 남성 헤어 컬러 참고 사진", credit: "Pexels" }],
+      summer: [{ id: "220453", alt: "차분한 쿨 브라운 남성 헤어 컬러 참고 사진", credit: "Pexels" }],
+      autumn: [{ id: "2379004", alt: "깊은 브라운 남성 헤어 컬러 참고 사진", credit: "Pexels" }],
+      winter: [{ id: "91227", alt: "다크 브라운과 블랙 남성 헤어 컬러 참고 사진", credit: "Pexels" }],
+      unknown: [{ id: "1681010", alt: "뉴트럴 브라운 남성 헤어 컬러 참고 사진", credit: "Pexels" }]
+    },
+    beauty: {
+      spring: [{ id: "3764013", alt: "깔끔한 남성 스킨케어와 그루밍 참고 사진", credit: "Pexels" }],
+      summer: [{ id: "3777931", alt: "차분한 남성 그루밍 제품 참고 사진", credit: "Pexels" }],
+      autumn: [{ id: "3757957", alt: "브라운 톤 남성 그루밍 무드 참고 사진", credit: "Pexels" }],
+      winter: [{ id: "3814446", alt: "선명하고 정돈된 남성 그루밍 참고 사진", credit: "Pexels" }],
+      unknown: [{ id: "3764013", alt: "기본 남성 그루밍 제품 참고 사진", credit: "Pexels" }]
+    },
+    nail: {
+      spring: [{ id: "3757957", alt: "깨끗한 손 관리와 그루밍 참고 사진", credit: "Pexels" }],
+      summer: [{ id: "3764013", alt: "차분한 핸드케어 참고 사진", credit: "Pexels" }],
+      autumn: [{ id: "3777931", alt: "단정한 손 관리 참고 사진", credit: "Pexels" }],
+      winter: [{ id: "3814446", alt: "깔끔한 손 정리 참고 사진", credit: "Pexels" }],
+      unknown: [{ id: "3757957", alt: "기본 손 관리 참고 사진", credit: "Pexels" }]
+    },
+    outfit: {
+      spring: [{ id: "1043474", alt: "아이보리 셔츠와 라이트 데님 남성 착장 참고 사진", credit: "Pexels" }],
+      summer: [{ id: "1222271", alt: "블루 셔츠와 차분한 남성 착장 참고 사진", credit: "Pexels" }],
+      autumn: [{ id: "769749", alt: "카멜과 브라운 계열 남성 착장 참고 사진", credit: "Pexels" }],
+      winter: [{ id: "428340", alt: "화이트와 네이비 중심 남성 착장 참고 사진", credit: "Pexels" }],
+      unknown: [{ id: "1043473", alt: "화이트 셔츠와 뉴트럴 팬츠 남성 착장 참고 사진", credit: "Pexels" }]
+    },
+    mood: {
+      clean: [{ id: "1043474", alt: "정돈된 셔츠 중심의 남성 클린 무드 참고 사진", credit: "Pexels" }],
+      lovely: [{ id: "775358", alt: "부드러운 니트 중심의 남성 소프트 무드 참고 사진", credit: "Pexels" }],
+      chic: [{ id: "428340", alt: "재킷과 셔츠 중심의 남성 시크 무드 참고 사진", credit: "Pexels" }],
+      natural: [{ id: "1222271", alt: "편안한 소재 중심의 남성 내추럴 무드 참고 사진", credit: "Pexels" }]
+    },
+    service: {
+      salon: [{ id: "1704488", alt: "남성 헤어숍 스타일링 참고 사진", credit: "Pexels" }],
+      beautyShop: [{ id: "3764013", alt: "남성 그루밍 제품과 관리 참고 사진", credit: "Pexels" }],
+      shopping: [{ id: "1043474", alt: "남성 셔츠와 재킷 착장 참고 사진", credit: "Pexels" }],
+      caution: [{ id: "2923156", alt: "과하지 않은 남성 뉴트럴 착장 참고 사진", credit: "Pexels" }]
+    },
+    care: {
+      haircut: [{ id: "1704488", alt: "남성 헤어 커트 주기 참고 사진", credit: "Pexels" }],
+      roots: [{ id: "2379004", alt: "남성 헤어 컬러 리터치 참고 사진", credit: "Pexels" }],
+      treatment: [{ id: "614810", alt: "남성 모발 관리 참고 사진", credit: "Pexels" }],
+      makeup: [{ id: "3764013", alt: "남성 그루밍 제품 관리 참고 사진", credit: "Pexels" }],
+      colorCheck: [{ id: "3777931", alt: "남성 컬러 팔레트 점검 참고 사진", credit: "Pexels" }],
+      nail: [{ id: "3757957", alt: "남성 손 관리 참고 사진", credit: "Pexels" }]
+    }
+  }
+};
+
 const labels = {
-  today: ["오늘 바로 하기", "헤어·메이크업·옷 핵심만 먼저 보여드려요"],
+  today: ["오늘 바로 하기", "헤어·뷰티·그루밍·옷 핵심만 먼저 보여드려요"],
   hair: ["헤어 추천", "얼굴형과 퍼스널컬러를 함께 반영했어요"],
   beauty: ["뷰티 팔레트", "메이크업 컬러를 한 팔레트로 정리했어요"],
   wear: ["오늘의 옷", "잘 받는 색과 원하는 무드의 교집합이에요"],
@@ -239,6 +437,7 @@ const curatedVisuals = {
 const state = {
   name: "",
   area: "",
+  styleTarget: "neutral",
   faceShape: "",
   personalColor: "",
   mood: "",
@@ -345,6 +544,83 @@ function pexelsImageUrl(id, { width = 900, height = 1100 } = {}) {
 function getVisualGroup(group, key, fallback = "unknown") {
   const collection = curatedVisuals[group] || {};
   return collection[key] || collection[fallback] || [];
+}
+
+function currentStyleTargetKey() {
+  return styleTargets[state.styleTarget] ? state.styleTarget : "neutral";
+}
+
+function currentStyleTarget() {
+  return styleTargets[currentStyleTargetKey()];
+}
+
+function getStyleVisualGroup(group, key, fallback = "unknown") {
+  const targetCollection = targetVisuals[currentStyleTargetKey()]?.[group] || {};
+  return targetCollection[key] || targetCollection[fallback] || getVisualGroup(group, key, fallback);
+}
+
+function getServiceVisual(key) {
+  return targetVisuals[currentStyleTargetKey()]?.service?.[key] || curatedVisuals.service[key];
+}
+
+function getCareVisual(key) {
+  return targetVisuals[currentStyleTargetKey()]?.care?.[key] || curatedVisuals.care[key];
+}
+
+function styleValue(target, group, key, fallback) {
+  return target?.[group]?.[key] || fallback;
+}
+
+function styleGuide() {
+  const target = currentStyleTarget();
+  const face = faceShapes[state.faceShape] || faceShapes.unknown;
+  const color = personalColors[state.personalColor] || personalColors.unknown;
+  const mood = moods[state.mood] || moods.natural;
+  const faceKey = faceShapes[state.faceShape] ? state.faceShape : "unknown";
+  const colorKey = personalColors[state.personalColor] ? state.personalColor : "unknown";
+  const moodKey = moods[state.mood] ? state.mood : "natural";
+  return {
+    target,
+    face,
+    color,
+    mood,
+    hair: styleValue(target, "hairByFace", faceKey, face.hair),
+    fringe: styleValue(target, "fringeByFace", faceKey, face.fringe),
+    hairTip: styleValue(target, "hairTipByFace", faceKey, face.tip),
+    hairAvoid: styleValue(target, "hairAvoidByFace", faceKey, face.avoid),
+    outfit: styleValue(target, "outfitByColor", colorKey, color.outfit),
+    moodPiece: styleValue(target, "pieceByMood", moodKey, mood.piece),
+    moodDetail: styleValue(target, "detailByMood", moodKey, mood.detail),
+    beautyAction: styleValue(target, "beautyByMood", moodKey, mood.makeup)
+  };
+}
+
+function beautyRowsForTarget(color) {
+  if (currentStyleTargetKey() === "male") {
+    return [
+      ["아이브로우", color.brow],
+      ["피부 톤", ["얇은 톤 보정", color.shadow[1]]],
+      ["립 케어", ["무색 또는 로지 립밤", color.lip[1]]],
+      ["향·핸드", ["가벼운 우디/머스크", color.nail[1]]],
+      ["손 정리", ["짧고 깨끗한 손톱", color.nail[1]]]
+    ];
+  }
+  if (currentStyleTargetKey() === "neutral") {
+    return [
+      ["아이브로우", color.brow],
+      ["피부 톤", ["얇은 베이스 또는 톤 보정", color.shadow[1]]],
+      ["립", ["부담 없는 립밤/틴트", color.lip[1]]],
+      ["음영", color.shadow],
+      ["손 정리", ["깔끔한 핸드 케어", color.nail[1]]]
+    ];
+  }
+  return [
+    ["아이브로우", color.brow],
+    ["컬러 렌즈", color.lens],
+    ["립", color.lip],
+    ["아이 섀도", color.shadow],
+    ["네일", color.nail]
+  ];
 }
 
 function registerVisualGallery(key, visuals) {
@@ -530,8 +806,9 @@ function normalizeProfile(profile) {
     ...state,
     ...profile,
     name: normalizeText(profile.name, 12),
-    area: normalizeText(profile.area, 24),
-    faceShape: faceShapes[profile.faceShape] ? profile.faceShape : "unknown",
+	    area: normalizeText(profile.area, 24),
+	    styleTarget: styleTargets[profile.styleTarget] ? profile.styleTarget : "neutral",
+	    faceShape: faceShapes[profile.faceShape] ? profile.faceShape : "unknown",
     personalColor: personalColors[profile.personalColor] ? profile.personalColor : "unknown",
     mood: moods[profile.mood] ? profile.mood : "",
     analysisSource: profile.analysisSource === "photo" ? "photo" : "manual",
@@ -655,7 +932,7 @@ function showPhotoUnavailableNotice() {
     description: "지금은 사진 없이 직접 선택해도 같은 형식의 스타일 리포트를 만들 수 있습니다.",
     body: `
       <div class="sheet-info-list">
-        <p><strong>결과 형식은 같아요.</strong><span>얼굴형, 퍼스널컬러, 무드 기준으로 헤어·메이크업·옷 추천을 받을 수 있어요.</span></p>
+        <p><strong>결과 형식은 같아요.</strong><span>얼굴형, 퍼스널컬러, 추천 기준, 무드로 헤어·뷰티·그루밍·옷 추천을 받을 수 있어요.</span></p>
         <p><strong>나중에 사진 분석으로 이어갈 수 있어요.</strong><span>분석 서버가 준비되면 같은 화면에서 바로 사용할 수 있게 열어둘게요.</span></p>
       </div>
     `,
@@ -685,9 +962,10 @@ function beginPhotoFlow({ pickImmediately = false } = {}) {
 
 function resetStateForManual() {
   Object.assign(state, {
-    name: "",
-    area: "",
-    faceShape: "",
+	    name: "",
+	    area: "",
+	    styleTarget: "neutral",
+	    faceShape: "",
     personalColor: "",
     mood: "",
     analysisSource: "manual",
@@ -897,6 +1175,7 @@ function renderEvidence(elementId, evidence, fallback) {
 }
 
 function renderAnalysisReview() {
+  if (!styleTargets[state.styleTarget]) state.styleTarget = "neutral";
   document.querySelector("#review-face-options").innerHTML = optionMarkup(faceShapes, analysisResult?.faceShape);
   document.querySelector("#review-color-options").innerHTML = optionMarkup(personalColors, analysisResult?.personalColor);
   document.querySelector("#analysis-confidence").textContent = `${state.analysisConfidence}%`;
@@ -929,6 +1208,7 @@ function refreshReviewSelections() {
 
 function updateAnalysisCompleteButton() {
   state.name = analysisNameInput.value;
+  if (!styleTargets[state.styleTarget]) state.styleTarget = "neutral";
   const missing = [];
   if (!state.name.trim()) missing.push("닉네임");
   if (!faceShapes[state.faceShape]) missing.push("얼굴형");
@@ -951,6 +1231,7 @@ function beginQuiz({ reset = false } = {}) {
   if (reset) {
     resetStateForManual();
   }
+  if (!styleTargets[state.styleTarget]) state.styleTarget = "neutral";
   nameInput.value = state.name;
   currentStep = 0;
   refreshChoices();
@@ -997,6 +1278,7 @@ function refreshStep() {
 }
 
 function completeProfile() {
+  if (!styleTargets[state.styleTarget]) state.styleTarget = "neutral";
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   revealSavedEntryPoints();
   currentCategory = "today";
@@ -1007,12 +1289,11 @@ function completeProfile() {
 }
 
 function renderResultHeader() {
-  const face = faceShapes[state.faceShape] || faceShapes.unknown;
-  const color = personalColors[state.personalColor] || personalColors.unknown;
-  const mood = moods[state.mood];
+  const { face, color, mood, target } = styleGuide();
   document.querySelector("#result-name").textContent = state.name.trim() || "모이";
   document.querySelector("#direction-title").innerHTML = color.title.replace("\n", "<br />");
   document.querySelector("#profile-tags").innerHTML = [
+    { label: target.label, hint: "추천 기준" },
     { label: face.label, hint: face.isUnknown ? "범용 추천" : "얼굴형" },
     { label: color.label, hint: color.isUnknown ? "기본 추천" : "퍼스널컬러" },
     { label: mood.label, hint: "무드" }
@@ -1044,28 +1325,26 @@ function areaLabel() {
 
 function renderResultSummary() {
   if (!resultSummaryGrid) return;
-  const face = faceShapes[state.faceShape] || faceShapes.unknown;
-  const color = personalColors[state.personalColor] || personalColors.unknown;
-  const mood = moods[state.mood];
+  const { face, color, mood, target, hair, hairAvoid, outfit, beautyAction } = styleGuide();
   const faceNote = face.isUnknown ? "얼굴형을 특정하지 않은 범용 추천" : face.label;
   const colorNote = color.isUnknown ? "무난한 뉴트럴 팔레트" : color.label;
-  const faceVisuals = getVisualGroup("face", state.faceShape);
-  const beautyVisuals = getVisualGroup("beauty", state.personalColor);
-  const outfitVisuals = getVisualGroup("outfit", state.personalColor);
-  const moodVisuals = getVisualGroup("mood", state.mood, "natural");
+  const faceVisuals = getStyleVisualGroup("face", state.faceShape);
+  const beautyVisuals = getStyleVisualGroup("beauty", state.personalColor);
+  const outfitVisuals = getStyleVisualGroup("outfit", state.personalColor);
+  const moodVisuals = getStyleVisualGroup("mood", state.mood, "natural");
   resultSummaryGrid.innerHTML = `
     <article class="summary-card">
-      <span class="summary-label">내 기준</span>
+      <span class="summary-label">내 기준 · ${target.label}</span>
       <h2>${faceNote}</h2>
-      <p>${colorNote} · ${mood.label}</p>
+      <p>${colorNote} · ${mood.label} · ${target.hint}</p>
       ${renderSummaryVisuals("summary-profile", [faceVisuals[0], beautyVisuals[0], moodVisuals[0]], "내 기준")}
     </article>
     <article class="summary-card emphasis">
       <span class="summary-label">오늘 바로 하기</span>
       <ul>
-        <li><strong>헤어</strong><span>${face.hair}</span></li>
-        <li><strong>메이크업</strong><span>${color.lip[0]} + ${color.shadow[0]}</span></li>
-        <li><strong>옷</strong><span>${color.outfit}</span></li>
+        <li><strong>헤어</strong><span>${hair}</span></li>
+        <li><strong>${target.beautyLabel}</strong><span>${beautyAction}</span></li>
+        <li><strong>옷</strong><span>${outfit}</span></li>
       </ul>
       ${renderSummaryVisuals("summary-action", [faceVisuals[0], beautyVisuals[0], outfitVisuals[0]], "오늘 바로 하기")}
     </article>
@@ -1073,9 +1352,9 @@ function renderResultSummary() {
       <span class="summary-label">피하면 좋은 것</span>
       <ul>
         <li><strong>컬러</strong><span>${color.avoid}</span></li>
-        <li><strong>헤어</strong><span>${face.avoid}</span></li>
+        <li><strong>헤어</strong><span>${hairAvoid}</span></li>
       </ul>
-      ${renderSummaryVisuals("summary-caution", [curatedVisuals.service.caution[0]], "피하면 좋은 것")}
+      ${renderSummaryVisuals("summary-caution", [getServiceVisual("caution")?.[0]], "피하면 좋은 것")}
     </article>
   `;
 }
@@ -1162,24 +1441,25 @@ function updateCategoryTabs(category) {
 }
 
 function renderHeading(category) {
-  const [title, description] = labels[category];
+  const [baseTitle, baseDescription] = labels[category];
+  const target = currentStyleTarget();
+  const title = category === "beauty" ? target.beautyTitle : baseTitle;
+  const description = category === "beauty" ? target.beautyDescription : baseDescription;
   return `<div class="content-heading"><h2>${title}</h2><p>${description}</p></div>`;
 }
 
 function renderToday() {
-  const face = faceShapes[state.faceShape] || faceShapes.unknown;
-  const color = personalColors[state.personalColor] || personalColors.unknown;
-  const mood = moods[state.mood];
+  const { color, mood, target, hair, hairTip, fringe, outfit, beautyAction } = styleGuide();
   const area = areaLabel();
-  const faceVisuals = getVisualGroup("face", state.faceShape);
-  const beautyVisuals = getVisualGroup("beauty", state.personalColor);
-  const outfitVisuals = getVisualGroup("outfit", state.personalColor);
+  const faceVisuals = getStyleVisualGroup("face", state.faceShape);
+  const beautyVisuals = getStyleVisualGroup("beauty", state.personalColor);
+  const outfitVisuals = getStyleVisualGroup("outfit", state.personalColor);
   return `${renderHeading("today")}
     <article class="today-lead">
       <div class="today-lead-copy">
         <span class="card-kicker">${mood.english.toUpperCase()}</span>
-        <h3>${color.outfit}</h3>
-        <p>${color.summary} 오늘은 ${mood.accent}에 집중해 보세요.</p>
+        <h3>${outfit}</h3>
+        <p>${color.summary} ${target.summary}</p>
       </div>
       <div class="today-look today-look-photo">
         ${renderVisualFigure("today-outfit", outfitVisuals, { className: "today-visual", label: "오늘의 착장", eager: true, width: 900, height: 1100 })}
@@ -1189,44 +1469,43 @@ function renderToday() {
       <article class="recommendation-card has-visual">
         ${renderVisualFigure("today-hair", faceVisuals, { className: "recommendation-visual", label: "헤어 참고" })}
         <div class="card-topline"><span class="card-icon">⌁</span><span class="card-label">HAIR</span></div>
-        <h3>${face.hair}</h3>
-        <p>${face.tip}</p>
-        <div class="chip-row"><span class="chip">${color.hairColor}</span><span class="chip">${face.fringe}</span></div>
+        <h3>${hair}</h3>
+        <p>${hairTip}</p>
+        <div class="chip-row"><span class="chip">${color.hairColor}</span><span class="chip">${fringe}</span></div>
       </article>
       <article class="recommendation-card has-visual">
-        ${renderVisualFigure("today-beauty", beautyVisuals, { className: "recommendation-visual", label: "메이크업 참고" })}
-        <div class="card-topline"><span class="card-icon">◒</span><span class="card-label">BEAUTY</span></div>
-        <h3>${color.lip[0]} 포인트</h3>
-        <p>${mood.makeup} 조합으로 전체 인상을 연결해 보세요.</p>
+        ${renderVisualFigure("today-beauty", beautyVisuals, { className: "recommendation-visual", label: `${target.beautyLabel} 참고` })}
+        <div class="card-topline"><span class="card-icon">◒</span><span class="card-label">${target.beautyLabel.toUpperCase()}</span></div>
+        <h3>${target.beautyLabel} 포인트</h3>
+        <p>${beautyAction} 조합으로 전체 인상을 연결해 보세요.</p>
         <div class="chip-row"><span class="chip">${color.brow[0]}</span><span class="chip">${color.shadow[0]}</span></div>
       </article>
       <article class="recommendation-card full has-visual">
-        ${renderVisualFigure("today-nearby", curatedVisuals.service.salon, { className: "recommendation-visual wide", label: "주변 숍 참고" })}
+        ${renderVisualFigure("today-nearby", getServiceVisual("salon"), { className: "recommendation-visual wide", label: "주변 숍 참고" })}
         <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">${area ? `NEAR ${area.toUpperCase()}` : "NEARBY"}</span></div>
         <h3>내 스타일을 잘 아는 가까운 숍</h3>
-        <p>${area ? `${area} 주변의` : "활동 지역을 설정하면"} 퍼스널컬러 전문 헤어·메이크업 숍을 지도에서 바로 살펴볼 수 있어요.</p>
-        <button class="action-link map-action-button" type="button" data-map-query="퍼스널 컬러 헤어 메이크업">주변 숍 찾아보기 ${arrowIcon()}</button>
+        <p>${area ? `${area} 주변의` : "활동 지역을 설정하면"} ${target.shopLabel}을 지도에서 바로 살펴볼 수 있어요.</p>
+        <button class="action-link map-action-button" type="button" data-map-query="${target.nearShopQuery}">주변 숍 찾아보기 ${arrowIcon()}</button>
       </article>
     </div>`;
 }
 
 function renderHair() {
-  const face = faceShapes[state.faceShape] || faceShapes.unknown;
-  const color = personalColors[state.personalColor] || personalColors.unknown;
+  const { color, hair, fringe, hairTip, hairAvoid } = styleGuide();
   const area = areaLabel();
-  const faceVisuals = getVisualGroup("face", state.faceShape);
-  const hairColorVisuals = getVisualGroup("hairColor", state.personalColor);
+  const faceVisuals = getStyleVisualGroup("face", state.faceShape);
+  const hairColorVisuals = getStyleVisualGroup("hairColor", state.personalColor);
   return `${renderHeading("hair")}
     <div class="recommendation-grid">
       <article class="recommendation-card full has-visual">
         ${renderVisualFigure("hair-cut", faceVisuals, { className: "recommendation-visual wide", label: "추천 컷 참고", eager: true })}
         <div class="card-topline"><span class="card-icon">⌁</span><span class="card-label">BEST CUT</span></div>
-        <h3>${face.hair}</h3>
-        <p>${face.tip}</p>
+        <h3>${hair}</h3>
+        <p>${hairTip}</p>
         <ul class="detail-list">
-          <li><span>앞머리</span><strong>${face.fringe}</strong></li>
-          <li><span>피하면 좋은 것</span><strong>${face.avoid}</strong></li>
-          <li><span>미용실에서</span><strong>“얼굴선을 따라 가볍게 연결되는 레이어를 살려주세요.”</strong></li>
+          <li><span>앞머리/가르마</span><strong>${fringe}</strong></li>
+          <li><span>피하면 좋은 것</span><strong>${hairAvoid}</strong></li>
+          <li><span>미용실에서</span><strong>“얼굴선을 따라 가볍게 연결되는 질감과 볼륨을 살려주세요.”</strong></li>
         </ul>
       </article>
       <article class="recommendation-card has-visual">
@@ -1237,7 +1516,7 @@ function renderHair() {
         <div class="chip-row">${color.hairAlt.map((item) => `<span class="chip">${item}</span>`).join("")}</div>
       </article>
       <article class="recommendation-card has-visual">
-        ${renderVisualFigure("hair-salon", curatedVisuals.service.salon, { className: "recommendation-visual", label: "헤어숍 참고" })}
+        ${renderVisualFigure("hair-salon", getServiceVisual("salon"), { className: "recommendation-visual", label: "헤어숍 참고" })}
         <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">SALON</span></div>
         <h3>${area ? `${area} 헤어숍 찾기` : "헤어숍 찾기"}</h3>
         <p>상담 전 이 리포트의 헤어스타일과 컬러 이름을 함께 보여주면 더 정확해요.</p>
@@ -1251,24 +1530,19 @@ function beautyRow(label, item) {
 }
 
 function renderBeauty() {
-  const color = personalColors[state.personalColor] || personalColors.unknown;
-  const mood = moods[state.mood];
+  const { color, mood, target, beautyAction } = styleGuide();
   const area = areaLabel();
-  const beautyVisuals = getVisualGroup("beauty", state.personalColor);
-  const nailVisuals = getVisualGroup("nail", state.personalColor);
+  const beautyVisuals = getStyleVisualGroup("beauty", state.personalColor);
+  const nailVisuals = getStyleVisualGroup("nail", state.personalColor);
   return `${renderHeading("beauty")}
     <div class="recommendation-grid">
       <article class="recommendation-card full has-visual">
-        ${renderVisualFigure("beauty-palette", [beautyVisuals[0], nailVisuals[0]], { className: "recommendation-visual wide", label: "뷰티 팔레트 참고", eager: true })}
-        <div class="card-topline"><span class="card-icon">◒</span><span class="card-label">MY PALETTE</span></div>
+        ${renderVisualFigure("beauty-palette", [beautyVisuals[0], nailVisuals[0]], { className: "recommendation-visual wide", label: `${target.beautyTitle} 참고`, eager: true })}
+        <div class="card-topline"><span class="card-icon">◒</span><span class="card-label">MY ${target.beautyLabel.toUpperCase()}</span></div>
         <h3>${color.label} × ${mood.label}</h3>
-        <p>${mood.makeup}이 오늘의 핵심이에요.</p>
+        <p>오늘은 ${beautyAction}에 집중해 보세요.</p>
         <ul class="detail-list">
-          ${beautyRow("아이브로우", color.brow)}
-          ${beautyRow("컬러 렌즈", color.lens)}
-          ${beautyRow("립", color.lip)}
-          ${beautyRow("아이 섀도", color.shadow)}
-          ${beautyRow("네일", color.nail)}
+          ${beautyRowsForTarget(color).map(([label, item]) => beautyRow(label, item)).join("")}
         </ul>
       </article>
       <article class="recommendation-card has-visual">
@@ -1276,29 +1550,28 @@ function renderBeauty() {
         <div class="card-topline"><span class="card-icon">＋</span><span class="card-label">SHOPPING</span></div>
         <h3>내 컬러 제품 모아보기</h3>
         <p>색상명으로 여러 브랜드의 제품을 비교해 보세요. 발색은 피부색과 화면에 따라 달라질 수 있어요.</p>
-        <a class="action-link" href="${searchLink(`${color.label} ${color.lip[0]} 립`)}" target="_blank" rel="noreferrer">추천 립 검색 ${arrowIcon()}</a>
+        <a class="action-link" href="${searchLink(`${color.label} ${target.beautyLabel} ${currentStyleTargetKey() === "male" ? "립밤 톤업" : color.lip[0]}`)}" target="_blank" rel="noreferrer">추천 제품 검색 ${arrowIcon()}</a>
       </article>
       <article class="recommendation-card has-visual">
-        ${renderVisualFigure("beauty-shop", [curatedVisuals.service.beautyShop[0], nailVisuals[0]], { className: "recommendation-visual", label: "뷰티숍 참고" })}
-        <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">BEAUTY SHOP</span></div>
-        <h3>뷰티 전문가 만나기</h3>
-        <p>중요한 날이라면 ${area ? `${area} 주변` : "활동 지역 주변"} 메이크업·네일숍에서 내 팔레트로 상담해 보세요.</p>
-        <button class="action-link map-action-button" type="button" data-map-query="메이크업 네일샵">주변 숍 보기 ${arrowIcon()}</button>
+        ${renderVisualFigure("beauty-shop", [getServiceVisual("beautyShop")?.[0], nailVisuals[0]], { className: "recommendation-visual", label: `${target.shopLabel} 참고` })}
+        <div class="card-topline"><span class="card-icon">⌖</span><span class="card-label">SHOP</span></div>
+        <h3>전문가 만나기</h3>
+        <p>중요한 날이라면 ${area ? `${area} 주변` : "활동 지역 주변"} ${target.shopLabel}에서 내 팔레트로 상담해 보세요.</p>
+        <button class="action-link map-action-button" type="button" data-map-query="${target.nearShopQuery}">주변 숍 보기 ${arrowIcon()}</button>
       </article>
     </div>`;
 }
 
 function renderWear() {
-  const color = personalColors[state.personalColor] || personalColors.unknown;
-  const mood = moods[state.mood];
-  const outfitVisuals = getVisualGroup("outfit", state.personalColor);
-  const moodVisuals = getVisualGroup("mood", state.mood, "natural");
+  const { color, mood, target, outfit, moodPiece, moodDetail } = styleGuide();
+  const outfitVisuals = getStyleVisualGroup("outfit", state.personalColor);
+  const moodVisuals = getStyleVisualGroup("mood", state.mood, "natural");
   return `${renderHeading("wear")}
     <article class="today-lead">
       <div class="today-lead-copy">
         <span class="card-kicker">TODAY’S LOOK</span>
-        <h3>${color.outfit}</h3>
-        <p>${mood.piece}를 중심으로 ${mood.detail}을 더해 ${mood.label} 무드를 완성해 보세요.</p>
+        <h3>${outfit}</h3>
+        <p>${moodPiece}를 중심으로 ${moodDetail}을 더해 ${mood.label} 무드를 완성해 보세요.</p>
       </div>
       <div class="today-look today-look-photo">
         ${renderVisualFigure("wear-look", outfitVisuals, { className: "today-visual", label: "오늘의 옷", eager: true, width: 900, height: 1100 })}
@@ -1309,21 +1582,21 @@ function renderWear() {
         ${renderVisualFigure("wear-best-colors", moodVisuals, { className: "recommendation-visual", label: "베스트 컬러 참고" })}
         <div class="card-topline"><span class="card-icon">◇</span><span class="card-label">BEST COLORS</span></div>
         <h3>${color.best.join(" · ")}</h3>
-        <p>상의, 스카프처럼 얼굴 가까이에 배치하면 가장 효과적이에요.</p>
+        <p>셔츠, 이너, 니트처럼 얼굴 가까이에 배치하면 가장 효과적이에요.</p>
         <div class="chip-row">${color.palette.map((hex, index) => `<span class="chip color-swatch-line"><i style="background:${hex}"></i>${color.best[index] ?? "포인트"}</span>`).join("")}</div>
       </article>
       <article class="recommendation-card has-visual">
-        ${renderVisualFigure("wear-caution", curatedVisuals.service.caution, { className: "recommendation-visual", label: "피할 조합 참고" })}
+        ${renderVisualFigure("wear-caution", getServiceVisual("caution"), { className: "recommendation-visual", label: "피할 조합 참고" })}
         <div class="card-topline"><span class="card-icon">×</span><span class="card-label">SKIP TODAY</span></div>
         <h3>이 조합은 잠시 쉬기</h3>
         <p>${color.avoid}. 입어야 한다면 얼굴에서 멀리 두고 베스트 컬러를 액세서리로 보완하세요.</p>
       </article>
       <article class="recommendation-card full has-visual">
-        ${renderVisualFigure("wear-shopping", [outfitVisuals[0], curatedVisuals.service.shopping[0]], { className: "recommendation-visual wide", label: "비슷한 옷 참고" })}
+        ${renderVisualFigure("wear-shopping", [outfitVisuals[0], getServiceVisual("shopping")?.[0]], { className: "recommendation-visual wide", label: "비슷한 옷 참고" })}
         <div class="card-topline"><span class="card-icon">＋</span><span class="card-label">FIND THE LOOK</span></div>
         <h3>오늘의 착장 쇼핑하기</h3>
         <p>추천은 특정 판매처의 광고가 아닌 스타일 검색 링크예요. 소재와 핏을 꼭 함께 확인하세요.</p>
-        <a class="action-link" href="${searchLink(`${color.outfit} ${mood.piece}`)}" target="_blank" rel="noreferrer">비슷한 옷 찾아보기 ${arrowIcon()}</a>
+        <a class="action-link" href="${searchLink(`${outfit} ${moodPiece} ${target.shoppingSuffix}`)}" target="_blank" rel="noreferrer">비슷한 옷 찾아보기 ${arrowIcon()}</a>
       </article>
     </div>`;
 }
@@ -1331,7 +1604,7 @@ function renderWear() {
 function renderCareItem(key, number, title, description, badge) {
   return `
     <div class="schedule-item has-visual">
-      ${renderVisualFigure(`care-${key}`, curatedVisuals.care[key], { className: "schedule-visual", label: title, width: 520, height: 520 })}
+      ${renderVisualFigure(`care-${key}`, getCareVisual(key), { className: "schedule-visual", label: title, width: 520, height: 520 })}
       <span class="schedule-number">${number}</span>
       <div><h3>${title}</h3><p>${description}</p></div>
       <span class="schedule-badge">${badge}</span>
@@ -1340,9 +1613,10 @@ function renderCareItem(key, number, title, description, badge) {
 }
 
 function renderCare() {
+  const target = currentStyleTarget();
   return `${renderHeading("care")}
     <article class="recommendation-card full has-visual">
-      ${renderVisualFigure("care-overview", [curatedVisuals.care.haircut[0], curatedVisuals.care.makeup[0], curatedVisuals.care.nail[0]], { className: "recommendation-visual wide", label: "관리 주기 참고", eager: true })}
+      ${renderVisualFigure("care-overview", [getCareVisual("haircut")?.[0], getCareVisual("makeup")?.[0], getCareVisual("nail")?.[0]], { className: "recommendation-visual wide", label: "관리 주기 참고", eager: true })}
       <div class="card-topline"><span class="card-icon">↻</span><span class="card-label">CARE CYCLE</span></div>
       <h3>잊기 쉬운 관리 주기</h3>
       <p>개인의 모발 성장 속도와 제품 사용 기간에 맞춰 조금씩 조정해 주세요.</p>
@@ -1350,9 +1624,9 @@ function renderCare() {
         ${renderCareItem("haircut", "01", "헤어 커트", "실루엣과 끝선이 무거워지기 전에 정리", "6–8주")}
         ${renderCareItem("roots", "02", "뿌리 염색", "전체 염색보다 손상을 줄이는 리터치 중심", "4–6주")}
         ${renderCareItem("treatment", "03", "펌 또는 클리닉", "컬이 느슨해지고 모발 끝이 건조해질 때", "3–4개월")}
-        ${renderCareItem("makeup", "04", "메이크업 제품", "냄새와 제형이 변했다면 기간 전이라도 교체", "개봉 후 6–12개월")}
+        ${renderCareItem("makeup", "04", target.careMakeupTitle, "냄새와 제형이 변했다면 기간 전이라도 교체", "개봉 후 6–12개월")}
         ${renderCareItem("colorCheck", "05", "퍼스널 컬러 점검", "헤어 컬러나 피부 톤 변화가 클 때 다시 확인", "필요할 때")}
-        ${renderCareItem("nail", "06", "네일 · 페디", "들뜸이나 갈라짐이 생기기 전에 제거하고 휴식", "네일 2–3주 · 페디 4–6주")}
+        ${renderCareItem("nail", "06", target.careNailTitle, "들뜸, 갈라짐, 건조함이 생기기 전에 정리하고 휴식", "2–6주")}
       </div>
     </article>`;
 }
@@ -1379,10 +1653,9 @@ function showToast(message, { duration = 2400 } = {}) {
 }
 
 function profileSummaryItems() {
-  const face = faceShapes[state.faceShape] || faceShapes.unknown;
-  const color = personalColors[state.personalColor] || personalColors.unknown;
-  const mood = moods[state.mood] || moods.natural;
+  const { face, color, mood, target } = styleGuide();
   return [
+    ["추천 기준", target.label],
     ["얼굴형", face.label],
     ["퍼스널컬러", color.label],
     ["무드", mood.label]
@@ -1439,7 +1712,7 @@ function openEditProfileSheet() {
     description: "결과를 버리지 않고, 필요한 기준만 다시 조정할 수 있어요.",
     body: `
       <div class="sheet-info-list">
-        <p><strong>직접 선택으로 수정</strong><span>닉네임, 얼굴형, 퍼스널컬러, 무드를 차례로 다시 고릅니다.</span></p>
+        <p><strong>직접 선택으로 수정</strong><span>닉네임, 추천 기준, 얼굴형, 퍼스널컬러, 무드를 차례로 다시 고릅니다.</span></p>
         ${canReviewPhoto ? "<p><strong>사진 분석 기준 확인</strong><span>AI가 제안한 얼굴형과 컬러를 다시 확인하고 수정합니다.</span></p>" : ""}
       </div>
     `,
@@ -1461,10 +1734,8 @@ function openEditProfileSheet() {
 }
 
 function sharePayload() {
-  const color = personalColors[state.personalColor] || personalColors.unknown;
-  const face = faceShapes[state.faceShape] || faceShapes.unknown;
-  const mood = moods[state.mood] || moods.natural;
-  const text = `나의 MOI 스타일: ${color.label} · ${face.label} · ${mood.label}`;
+  const { color, face, mood, target } = styleGuide();
+  const text = `나의 MOI 스타일: ${target.label} · ${color.label} · ${face.label} · ${mood.label}`;
   return { text, shareText: `${text}\n${window.location.href}` };
 }
 
