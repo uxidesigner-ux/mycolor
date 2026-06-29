@@ -4574,3 +4574,49 @@ body:has(#home-screen.is-active) .device-frame > .site-header { display: flex; }
 .sheet-account img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
 .sheet-account strong { display: block; font-size: 16px; }
 .sheet-account small { color: var(--muted); font-size: 13px; }
+
+/* ============================================================
+   v0.2.9 — Home openness + bottom-nav clip fix
+   - #home-screen was inheriting min-height:100svh from old rules, so it
+     grew taller than the stage and pushed the absolutely-positioned home
+     nav below the frame, where overflow:hidden clipped it (invisible /
+     half-cut). Pin every in-frame screen to the stage height.
+   - Home start area: open look — no tinted background, no borders; the
+     appbar sits right under the header as plain text (no glass bar), and
+     the small camera button is removed.
+   ============================================================ */
+.device-stage > .screen.is-active { min-height: 0; max-height: none; }
+.device-stage > #home-screen.is-active { min-height: 0; }
+
+.device-stage > #home-screen .start-mobile-app {
+  min-height: 0;
+  gap: 16px;
+  padding-top: 6px;
+  background: transparent;
+  border: 0;
+}
+
+.device-stage .start-appbar {
+  position: static;
+  z-index: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 2px 0 4px;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.device-stage .start-appbar .start-icon-button { display: none; }
+
+/* Sheet primary action stays pinned & fully visible (was half-cut when the
+   sheet content scrolled past the frame's clipped bottom). */
+.device-stage .quiz-shell { padding-bottom: 0; }
+.device-stage .quiz-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: 10px -20px 0;
+  padding: 12px 20px calc(14px + var(--safe-bottom));
+  background: var(--paper);
+  box-shadow: 0 -12px 20px -16px rgba(17, 17, 17, 0.45);
+}
