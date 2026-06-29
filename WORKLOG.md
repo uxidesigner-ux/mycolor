@@ -1113,3 +1113,17 @@
   - `scripts/build.mjs`: 소스 `config.js`에서 `googleClientId`를 정규식으로 읽어 production config에 포함(`process.env.MOI_GOOGLE_CLIENT_ID` 우선, 없으면 소스 값). 단일 출처 유지.
   - 전 파일 버전 0.2.8로 동기화.
 - 검증: `npm run verify` 통과(`Version verified: 0.2.8`). `dist/config.js`에 `googleClientId` 포함 확인.
+
+## 2026-06-29 KST — v0.2.9 하단 내비 잘림 수정 + 홈 개방감 개선
+
+- 요청: 하단 내비바가 안 보이거나 반절만 보임(완성도 저하). 모든 화면에서 UI 잘림 점검·개선. 헤더 아래 "스타일 시작/버전/작은 카메라" 영역이 헤더와 떨어지고 카드와 붙음 — 작은 카메라 제거, 배경색·보더 제거로 개방감.
+- 버전: `0.2.8` → `0.2.9` (config.js 캐시 버스팅 포함).
+- 진단(Playwright 측정):
+  - 하단 홈 내비: `#home-screen`이 옛 규칙의 `min-height:100svh`를 물려받아 스테이지보다 커져, absolute 내비가 프레임 아래로 밀려 `overflow:hidden`에 잘림(데스크톱은 완전히 안 보임, 모바일은 ~26/66px만 보임).
+  - 퀴즈 시트 `다음` 버튼: 시트 콘텐츠(781px)가 시트 높이(665px)보다 커서 footer가 스크롤 영역 안에서 프레임 하단에 반쯤 잘림.
+  - 결과/공유 footer: 긴 스크롤 페이지 하단에 있어 스크롤하면 완전히 보임(45px 여유, 문제 아님).
+- 조치(`styles.css` v0.2.9):
+  - `.device-stage > .screen.is-active`, `#home-screen.is-active`에 `min-height:0` → 모든 화면을 스테이지 높이에 고정. 내비가 프레임 안에 완전히 표시(높이별 14–15px 여유 확인).
+  - 홈 개방감: `.start-mobile-app` 배경 투명·보더 0, `.start-appbar`를 sticky 글라스 바 → 정적 투명 텍스트로(헤더 바로 아래), 앱바 내 작은 카메라 버튼 제거(HTML).
+  - 퀴즈 footer를 `position:sticky; bottom:0` 고정 footer로(배경+그림자) → `다음` 항상 완전 표시.
+- 검증: `npm run verify` 통과(`Version verified: 0.2.9`). Playwright 데스크톱/모바일 재측정 — 홈 내비 비잘림, 퀴즈 `다음` ok, 결과 footer 스크롤 시 완전 표시. 콘솔 error 0건.
