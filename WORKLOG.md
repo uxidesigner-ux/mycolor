@@ -1127,3 +1127,12 @@
   - 홈 개방감: `.start-mobile-app` 배경 투명·보더 0, `.start-appbar`를 sticky 글라스 바 → 정적 투명 텍스트로(헤더 바로 아래), 앱바 내 작은 카메라 버튼 제거(HTML).
   - 퀴즈 footer를 `position:sticky; bottom:0` 고정 footer로(배경+그림자) → `다음` 항상 완전 표시.
 - 검증: `npm run verify` 통과(`Version verified: 0.2.9`). Playwright 데스크톱/모바일 재측정 — 홈 내비 비잘림, 퀴즈 `다음` ok, 결과 footer 스크롤 시 완전 표시. 콘솔 error 0건.
+
+## 2026-06-29 KST — v0.2.11 시트 그래버 고정 + 내비 고정 확인
+
+- 요청: 바텀시트 드래그 핸들(그래버)이 비어 보이고, 스크롤/드래그하면 시트 위로 올라가 사라짐. 고정 필요. 내비바도 스크롤해도 고정 위치여야 함.
+- 진단: 플로우 시트(퀴즈/분석)의 그래버가 `.shell::before`로 스크롤 컨테이너 안에 있어 스크롤 시 위로 밀려 사라지고 상단이 비어 보임.
+- 조치(`styles.css` v0.2.11):
+  - `.shell::before` 그래버 제거, 그래버를 sticky 상단바의 absolute `::after`로 이동 → 시트 상단에 항상 고정. 상단바 `padding-top:16px`, 시트 `padding-top:4px`.
+  - 내비: v0.2.9에서 이미 프레임 기준 absolute(스크롤 무관 고정)임을 측정으로 확인.
+- 검증: `npm run verify` 통과(`Version verified: 0.2.11`). Playwright — 퀴즈 상단바/그래버·홈 내비 스크롤 전후 top 동일(고정).

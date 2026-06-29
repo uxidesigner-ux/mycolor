@@ -4620,3 +4620,34 @@ body:has(#home-screen.is-active) .device-frame > .site-header { display: flex; }
   background: var(--paper);
   box-shadow: 0 -12px 20px -16px rgba(17, 17, 17, 0.45);
 }
+
+/* ============================================================
+   v0.2.11 — Sheet drag handle pinned to the sticky header
+   The grabber used to sit in the scrollable shell, so it scrolled
+   up and away on drag/scroll and left an empty-looking gap. Move it
+   into the sticky topbar so it stays pinned at the sheet top.
+   ============================================================ */
+.device-stage .analysis-shell::before,
+.device-stage .quiz-shell::before { content: none; }
+
+.device-stage .quiz-shell,
+.device-stage .analysis-shell { padding-top: 4px; }
+
+.device-stage .analysis-screen.is-active .analysis-topbar,
+.device-stage .quiz-screen.is-active .quiz-topbar {
+  position: sticky;
+  padding-top: 16px;
+}
+.device-stage .analysis-topbar::after,
+.device-stage .quiz-topbar::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 42px;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+  pointer-events: none;
+}
