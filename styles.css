@@ -4925,3 +4925,33 @@ body:has(#home-screen.is-active) .device-frame > .site-header { display: flex; }
   cursor: pointer;
 }
 .result-saved-button svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* ============================================================
+   v0.2.17 — Bottom nav pinned structurally (iOS-safe)
+   Absolute positioning inside the scroll container let iOS drag the
+   nav up with the content. Make #home-screen a flex column: the app
+   scrolls (flex:1), the nav is a non-scrolling bottom bar (flex:0).
+   ============================================================ */
+.device-stage > #home-screen.is-active {
+  display: flex;
+  flex-direction: column;
+}
+.device-stage > #home-screen .start-mobile-app {
+  position: static;
+  inset: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 16px;
+}
+.device-stage > #home-screen .start-floating-nav {
+  position: static;
+  flex: 0 0 auto;
+  transform: none;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  margin: 0;
+  padding: 6px 14px calc(12px + var(--safe-bottom));
+}

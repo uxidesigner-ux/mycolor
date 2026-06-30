@@ -1188,3 +1188,10 @@
   - 헤더 제거로 잃은 결과 화면 이동성 보완: 결과 상단에 `← 홈` + 저장 북마크(`#result-home-button`/`#result-saved-button`).
   - 내비 버그: `.saved-inline-button` margin 0(처짐 제거), `.start-nav-item svg`를 일관 아웃라인(fill:none·stroke)으로 → 홈·기록·저장 동일 스타일·정렬.
 - 검증: `npm run verify` 통과(`Version verified: 0.2.16`). Playwright: 헤더 없음·앱바 로그인 존재·내비 3항목 top 동일(778)·결과 ← 홈/저장 존재·홈 복귀 동작·콘솔 error 0건.
+
+## 2026-06-30 KST — v0.2.17 하단 내비 고정(iOS 안전)
+
+- 요청: 스크롤 시 내비바가 콘텐츠와 함께 위로 딸려 올라감. 항상 화면 하단 고정 필요.
+- 진단: 내비가 `position:absolute`로 스크롤 컨테이너(`#home-screen`) 기준 고정 — 헤드리스 Chromium에선 고정되나, iOS Safari는 overflow 컨테이너 내 absolute를 콘텐츠와 함께 끌어올리는 케이스. 측정상 헤드리스는 정상이라 iOS 특이 동작으로 판단.
+- 조치(`styles.css` v0.2.17): `#home-screen.is-active`를 flex column으로 전환. `.start-mobile-app` = flex:1·overflow-y:auto(스크롤), `.start-floating-nav` = flex:0 비스크롤 하단 바(absolute 제거). 구조적으로 스크롤 영역 밖에 위치 → 어떤 브라우저에서도 하단 고정. 스크롤러 하단 패딩 104→16px(겹침 제거).
+- 검증: `npm run verify` 통과(`Version verified: 0.2.17`). Playwright(390×560): 휠 스크롤 212px에도 내비 top 484·bottom 560(뷰포트 하단) 고정, 콘텐츠만 스크롤. 콘솔 error 0건.

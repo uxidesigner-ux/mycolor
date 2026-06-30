@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.16";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.17";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
