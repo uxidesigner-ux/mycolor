@@ -1177,3 +1177,14 @@
 - 진단: 내비 cluster 높이 76px ≠ FAB 58px. 헤더 배경 glass-tint-strong(반투명) → 회색 띠.
 - 조치(`styles.css` v0.2.15): `.start-nav-cluster` height 58px(=FAB), `.start-nav-item` min-width 58→66px·height 46px(균일·넓은 터치). `.device-frame > .site-header` 배경 화이트·blur 제거.
 - 검증: `npm run verify` 통과(`Version verified: 0.2.15`). Playwright: 내비 66×46 균일·cluster 58=FAB 58, 헤더 bg 화이트, 스크롤 전후 헤더·내비 고정. 콘솔 error 0건.
+
+## 2026-06-30 KST — v0.2.16 헤더 제거 + 로그인 앱바 이동 + 내비 버그
+
+- 요청: 화면 녹화 분석 → 멘탈모델·UX 개선. 내비 "저장" 처짐 수정, 헤더 저장=내비 저장 동일 → 헤더 제거. 로그인은 앱바로.
+- 영상 분석 발견: ① 내비 저장 처짐(`.saved-inline-button` 모바일 margin 잔존) ② 기록 아이콘이 검은 원 덩어리(SVG stroke 미지정) ③ 헤더+앱바 상단 chrome 중복(MOI 브랜딩·저장·공유·새로고침 중복/모호) ④ 버전 메인 노출 ⑤ 로그인-기록/저장 미동기화 멘탈모델 갭.
+- 조치(`index.html`, `app.js`, `styles.css`):
+  - 상단 `header.site-header` 제거. 로그인(auth-button)을 홈 `start-appbar` 우측으로 이동. 버전은 kicker에 작은 캡션으로 유지(숨기지 않음).
+  - 헤더의 저장·공유·새로고침 제거(저장=하단 내비, 공유=결과 푸터, 새로고침=날씨 자체). `savedReportButton` 참조 옵셔널 가드.
+  - 헤더 제거로 잃은 결과 화면 이동성 보완: 결과 상단에 `← 홈` + 저장 북마크(`#result-home-button`/`#result-saved-button`).
+  - 내비 버그: `.saved-inline-button` margin 0(처짐 제거), `.start-nav-item svg`를 일관 아웃라인(fill:none·stroke)으로 → 홈·기록·저장 동일 스타일·정렬.
+- 검증: `npm run verify` 통과(`Version verified: 0.2.16`). Playwright: 헤더 없음·앱바 로그인 존재·내비 3항목 top 동일(778)·결과 ← 홈/저장 존재·홈 복귀 동작·콘솔 error 0건.
