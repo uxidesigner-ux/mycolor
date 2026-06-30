@@ -1,6 +1,6 @@
 const STORAGE_KEY = "moi-style-profile-v1";
 const ANALYSIS_CLIENT_KEY = "moi-style-analysis-client-v1";
-const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.15";
+const APP_VERSION = window.MOI_CONFIG?.appVersion?.trim() || "0.2.16";
 const MIN_SPLASH_MS = 2000;
 const splashStartedAt = performance.now();
 
@@ -822,7 +822,7 @@ function normalizeProfile(profile) {
 }
 
 function revealSavedEntryPoints() {
-  savedReportButton.hidden = false;
+  if (savedReportButton) savedReportButton.hidden = false;
   if (savedReportInlineButton) savedReportInlineButton.hidden = false;
 }
 
@@ -2336,7 +2336,9 @@ document.querySelector(".brand")?.addEventListener("click", (event) => {
 });
 document.querySelector("#demo-photo-button").hidden = !demoMode;
 document.querySelector("#demo-photo-button").addEventListener("click", () => setSelectedPhoto(createDemoPhoto()));
-savedReportButton.addEventListener("click", openSavedSheet);
+savedReportButton?.addEventListener("click", openSavedSheet);
+document.querySelector("#result-home-button")?.addEventListener("click", () => showScreen("home"));
+document.querySelector("#result-saved-button")?.addEventListener("click", openSavedSheet);
 savedReportInlineButton?.addEventListener("click", openSavedSheet);
 document.querySelector("#history-nav-button")?.addEventListener("click", openHistorySheet);
 document.querySelector("#save-proposal-button")?.addEventListener("click", saveProposal);

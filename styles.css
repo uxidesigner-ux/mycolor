@@ -4863,3 +4863,65 @@ body:has(#home-screen.is-active) .device-frame > .site-header { display: flex; }
   backdrop-filter: none;
   border-bottom: 1px solid var(--glass-hairline);
 }
+
+/* ============================================================
+   v0.2.16 — Header removed; login moved into the home appbar;
+   nav sag + icon fixes; result top nav (home/saved).
+   ============================================================ */
+/* Version folded into the kicker as a subtle caption. */
+.start-appbar .start-version {
+  margin: 0 0 0 5px;
+  padding: 0;
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 0;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+.start-appbar .auth-button { align-self: center; }
+
+/* Bottom nav: stop the 저장 item from sagging; consistent outline icons. */
+.start-nav-item.saved-inline-button { margin: 0; }
+.start-nav-item svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Result top nav replaces the removed global header (home + saved). */
+.result-topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.result-home-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 15px 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.result-home-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.result-saved-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--ink);
+  cursor: pointer;
+}
+.result-saved-button svg { width: 18px; height: 18px; fill: currentColor; }
